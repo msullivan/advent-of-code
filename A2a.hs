@@ -13,4 +13,5 @@ calcBox (l, w, h) =
   let sides = sort [l*w, l*h, w*h]
   in 2*sum sides + head sides
 
-main = interact $ (++"\n") . show . sum . map (calcBox . readBox) . lines
+answer f = interact $ (++"\n") . show . f
+main = answer $ sum . map (calcBox . readBox) . lines
