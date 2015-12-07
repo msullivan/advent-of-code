@@ -1,17 +1,28 @@
 import Data.List
-import Data.List.Extra
 import Data.Word
 import Data.Maybe
 import Data.Bits
-import qualified Data.Map as Map
+import qualified Data.Char
 
-type Signals = Map.Map String Word16
+--import qualified Data.Map.Lazy as Map
+--type Signals = Map.Map String Word16
+--doLookup = Map.lookup
+--doInsert = Map.insert
+
+-- Write a bullshit implementation of a map (based on functions) that
+-- works...
+type Signals = String -> Maybe Word16
+doLookup key m = m key
+doInsert key val map key' = if key == key' then Just val else map key'
+
 
 lookupSignal :: Signals -> String -> Word16
-lookupSignal signals key =
-  case Map.lookup key signals of
+lookupSignal signals key | any Data.Char.isAlpha key =
+  case doLookup key signals of
     Just v -> v
-    Nothing -> read key
+    Nothing -> error ("couldn't lookup: " ++ key)
+lookupSignal _ key  = read key
+
 
 
 computeGate :: [String] -> Signals -> Word16
@@ -20,7 +31,7 @@ computeGate cmd signals = comp cmd
         comp [x, "OR",  y] = val x .|. val y
         comp [x, "LSHIFT",  y] = val x `shiftL` (fromEnum $ val y)
         comp [x, "RSHIFT",  y] = val x `shiftR` (fromEnum $ val y)
-        comp ["not",  x] = complement $ val x
+        comp ["NOT",  x] = complement $ val x
         comp [x] = val x
 
         val = lookupSignal signals
@@ -28,9 +39,13 @@ computeGate cmd signals = comp cmd
 processGate :: Signals -> String -> Signals
 processGate signals cmd =
   let (gate, ["->", output]) = break (== "->") $ words cmd
-  in Map.insert output (computeGate gate signals) signals
+  in doInsert output (computeGate gate signals) signals
 
+
+makeSignals :: [String] -> Signals
+makeSignals cmds = signals
+  where signals = foldl processGate signals cmds
 
 
 answer f = interact $ (++"\n") . show . f
-main = answer $ fromJust . Map.lookup "a" . foldl processGate Map.empty . lines
+main = answer $ fromJust . doLookup "a" . makeSignals . lines
