@@ -14,7 +14,6 @@ lookupSignal signals key | any Data.Char.isAlpha key =
     Nothing -> error ("couldn't lookup: " ++ key)
 lookupSignal _ key  = read key
 
-
 computeGate :: [String] -> Signals -> Word16
 computeGate cmd signals = comp cmd
   where comp [x, "AND", y] = val x .&. val y
@@ -31,11 +30,9 @@ processGate signals signalsPart cmd =
   let (gate, ["->", output]) = break (== "->") $ words cmd
   in Map.insert output (computeGate gate signals) signalsPart
 
-
 makeSignals :: [String] -> Signals
 makeSignals cmds = signals
   where signals = foldl (processGate signals) Map.empty cmds
-
 
 answer f = interact $ (++"\n") . show . f
 main = answer $ fromJust . Map.lookup "a" . makeSignals . lines
