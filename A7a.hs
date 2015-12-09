@@ -25,14 +25,15 @@ computeGate cmd signals = comp cmd
 
         val = lookupSignal signals
 
-processGate :: Signals -> Signals -> String -> Signals
-processGate signals signalsPart cmd =
+processGate :: Signals -> String -> (String, Word16)
+processGate signals cmd =
   let (gate, ["->", output]) = break (== "->") $ words cmd
-  in Map.insert output (computeGate gate signals) signalsPart
+  in (output, computeGate gate signals)
 
 makeSignals :: [String] -> Signals
 makeSignals cmds = signals
-  where signals = foldl (processGate signals) Map.empty cmds
+  -- Feed the signals back into the computation lazily
+  where signals = Map.fromList $ map (processGate signals) cmds
 
 answer f = interact $ (++"\n") . show . f
 main = answer $ fromJust . Map.lookup "a" . makeSignals . lines

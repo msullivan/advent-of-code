@@ -1,3 +1,5 @@
+-- XXX: why did I write code for this instead of just modifying the input file?
+
 import Data.List
 import Data.Word
 import Data.Maybe
@@ -26,20 +28,20 @@ computeGate cmd signals = comp cmd
 
         val = lookupSignal signals
 
-processGate :: Signals -> Signals -> String -> Signals
-processGate signals signalsPart cmd =
+processGate :: Signals -> String -> (String, Word16)
+processGate signals cmd =
   let (gate, ["->", output]) = break (== "->") $ words cmd
-      -- keep the old value, if there is one
-  in Map.insertWith (flip const) output (computeGate gate signals) signalsPart
+  in (output, computeGate gate signals)
 
-
-makeSignals :: [String] -> Signals -> Signals
+makeSignals :: [String] -> [(String, Word16)] -> Signals
 makeSignals cmds start = signals
-  where signals = foldl (processGate signals) start cmds
+  -- Feed the signals back into the computation lazily
+  where signals = Map.fromList $ map (processGate signals) cmds ++ start
 
 lol cmds =
-  let a_val = fromJust $ Map.lookup "a" $ makeSignals cmds Map.empty
-  in fromJust $ Map.lookup "a" $ makeSignals cmds (Map.singleton "b" a_val)
+  let compute_a start = fromJust $ Map.lookup "a" $ makeSignals cmds start
+      a_val = compute_a []
+  in compute_a [("b", a_val)]
 
 answer f = interact $ (++"\n") . show . f
 main = answer $ lol . lines
