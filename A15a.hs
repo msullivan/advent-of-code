@@ -7,7 +7,7 @@ import Data.Bits
 import qualified Data.Char
 import qualified Data.Map as Map
 
-
+-- Input hardcoded because there are only 4 lines of it
 datas = [[2, 0, -2, 0, 3],
          [0, 5, -3, 0, 3],
          [0, 0, 5, -1, 8],
