@@ -1,11 +1,10 @@
-import Data.List
 import Control.Monad
 import Data.List.Extra
-import Data.Word
 import Data.Maybe
-import Data.Bits
 import qualified Data.Char
 import qualified Data.Map as Map
+
+splitOn1 a b = fromJust $ stripInfix a b
 
 type Data = Map.Map String Int
 
@@ -15,11 +14,10 @@ target = snd $ readSue input
 
 readSue :: String -> (Int, Data)
 readSue s =
-  let (prefix, body) = breakOn ": " s
-      body' = drop 2 body
-      fragments = splitOn ", " body'
+  let (prefix, body) = splitOn1 ": " s
+      fragments = splitOn ", " body
       parsePart frag =
-        let [key, count] = splitOn ": " frag in
+        let (key, count) = splitOn1 ": " frag in
         (key, read count)
       ["Sue", num] = words prefix
   in (read num, Map.fromList $ map parsePart fragments)
