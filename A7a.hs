@@ -2,17 +2,15 @@ import Data.List
 import Data.Word
 import Data.Maybe
 import Data.Bits
-import qualified Data.Char
 import qualified Data.Map as Map
 
 type Signals = Map.Map String Word16
 
 lookupSignal :: Signals -> String -> Word16
-lookupSignal signals key | any Data.Char.isAlpha key =
+lookupSignal signals key =
   case Map.lookup key signals of
     Just v -> v
-    Nothing -> error ("couldn't lookup: " ++ key)
-lookupSignal _ key  = read key
+    Nothing -> read key
 
 computeGate :: [String] -> Signals -> Word16
 computeGate cmd signals = comp cmd
