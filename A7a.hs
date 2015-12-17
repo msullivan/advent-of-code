@@ -7,7 +7,10 @@ import qualified Data.Map as Map
 type Signals = Map.Map String Word16
 
 lookupSignal :: Signals -> String -> Word16
-lookupSignal signals key = Map.findWithDefault (read key) key signals
+lookupSignal signals key =
+  case Map.lookup key signals of
+    Just v -> v
+    Nothing -> read key
 
 computeGate :: [String] -> Signals -> Word16
 computeGate cmd signals = comp cmd
