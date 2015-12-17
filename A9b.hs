@@ -16,19 +16,16 @@ makeMap :: [String] -> Distances
 makeMap = Map.fromList . concatMap parseLine
 
 adjPairs :: [a] -> [(a, a)]
-adjPairs (a1 : a2 : as) = (a1, a2) : adjPairs (a2 : as)
-adjPairs _ = []
+adjPairs xs = zip xs (tail xs)
 
-findShortest :: Distances -> Int
-findShortest ds = maximum costs -- ONLY CHANGE
+findLongest :: Distances -> Int
+findLongest ds = maximum $ map pathCost $ permutations cities
   where cities = nub $ map fst $ Map.keys ds
-        lists = map adjPairs $ permutations cities
         get k = fromJust $ Map.lookup k ds
-        listcost l = sum $ map get l
-        costs = map listcost lists
+        pathCost l = sum $ map get $ adjPairs l
 
 solve :: String -> Int
-solve = findShortest . makeMap . lines
+solve = findLongest . makeMap . lines
 
 answer f = interact $ (++"\n") . show . f
 main = answer solve
