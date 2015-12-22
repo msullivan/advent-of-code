@@ -2,6 +2,20 @@
 -- solution, it outputs the first solution that it sees. This somehow
 -- happens to work. I should maybe /actually/ solve this problem.
 
+-- Aha. Comments from the AOC create indicate that the grammar is
+-- actually unamibiguous (at least in terms of how many rules
+-- fire). This means that finding the first solution /is/ correct
+-- (though I didn't know it, of course). Now, this solution also
+-- doesn't actually manage to find the right solution for any *good*
+-- reason. The order that I generated candidates just happened to work
+-- on my input in a (very short) reasonable amount of time. It also
+-- seems to work on some other inputs I got my hands on.
+
+-- I flip the rules and work backwards from the molecule to e.  What
+-- it winds up doing, I think is always applying the rule that applies
+-- to the rightmost part of the string. And this seems to actually
+-- just work greedily on the inputs I've tried. Huh.
+
 import Control.Monad
 import Data.List.Extra
 import Data.Maybe
@@ -10,6 +24,7 @@ import Data.Maybe
 import Data.Function
 import qualified Data.Char
 import qualified Data.Map as Map
+import Debug.Trace
 
 splitOn1 a b = fromJust $ stripInfix a b
 
@@ -33,14 +48,16 @@ getNuses mapping (x:xs) =
   do (to, post) <- mapMaybe (checkMatch (x:xs)) mapping
      return $ to++post
 
+
 infty = 1000000000000000000000000000000000
-getCost :: [Integer] -> Integer
-getCost [] = infty
 -- XXX: This is rubbish, and wrong. We really need to take the
 -- /minimum/. But that was too slow, even when we memoized, and taking
 -- the /first/ somehow produced the right answer. If we reverse the
 -- results from getNuses, it no longer does. Looool.
-getCost x = head x
+getCost :: [Integer] -> Integer
+getCost x = case filter (<infty) x of
+  [] -> infty
+  a : as -> a
 
 findMin :: Mappings -> String -> Integer
 findMin mapping = {-memoFix-}fix search
