@@ -28,15 +28,21 @@ import Debug.Trace
 
 splitOn1 a b = fromJust $ stripInfix a b
 
-type Mappings = [(String, String)]
+type Chem = String
+type CString = [Chem]
 
-getMappings :: String -> Mappings -> [String]
+type Mappings = [(CString, CString)]
+
+toChems :: String -> CString
+toChems = groupBy (\x y -> Data.Char.isLower y)
+
+getMappings :: CString -> Mappings -> [CString]
 getMappings s = map snd . filter (\(x, _) -> x == s)
 
-getMap s = (to, from) -- Reverse the transformation, search backwards
+getMap s = (toChems to, toChems from) -- Reverse the transformation, search backwards
   where [from, "=>", to] = words s
 
-checkMatch :: String -> (String, String) -> Maybe (String, String)
+checkMatch :: CString -> (CString, CString) -> Maybe (CString, CString)
 checkMatch s (from, to) =
   case stripPrefix from s of
     Nothing -> Nothing
@@ -59,9 +65,9 @@ getCost x = case filter (<infty) x of
   [] -> infty
   a : as -> a
 
-findMin :: Mappings -> String -> Integer
+findMin :: Mappings -> CString -> Integer
 findMin mapping = {-memoFix-}fix search
-  where search _ "e" = 0
+  where search _ ["e"] = 0
         search search' s =
           1 + (getCost $ do
             s' <- getNuses mapping s
@@ -69,7 +75,8 @@ findMin mapping = {-memoFix-}fix search
 
 
 solve input = findMin mappings molecule
-  where molecule : "" : smappings = reverse $ lines input
+  where molecule = toChems molecule'
+        molecule' : "" : smappings = reverse $ lines input
         mappings = map getMap smappings
 
 answer f = interact $ (++"\n") . show . f
