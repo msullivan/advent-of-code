@@ -10,13 +10,14 @@ sekrit='reyedfim'
 def main(args):
     pas = ["*"]*8
     for i in range(1000000000):
-        s=hashlib.md5((sekrit+str(i)).encode())
+        s = hashlib.md5((sekrit+str(i)).encode())
         ss = s.hexdigest()
         if ss.startswith("00000"):
-            i = int(ss[5], 16)
-            if i < 8 and pas[i] == "*": pas[int(ss[5])] = ss[6]
-#            pas += ss[5]
-            print(len(pas), i, "".join(str(i) for i in pas), ss)
+            j = int(ss[5], 16)
+            if j < 8 and pas[j] == "*": pas[int(ss[5])] = ss[6]
+            print(i, "".join(pas), ss)
+            if "*" not in pas: break
+    print("".join(pas))
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv))
