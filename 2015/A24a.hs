@@ -10,9 +10,11 @@ import Data.List.Extra
 import Data.Maybe
 import qualified Data.Map as Map
 
+------
+-- Pruning search monad
 type Prune r a = ListT (Reader (Maybe r)) a
 
---pick :: [a] -> Prune a
+pick :: [a] -> Prune r a
 pick = fromList
 
 prune :: (a -> Bool) -> Prune a ()
@@ -27,6 +29,7 @@ runPrune m = run Nothing m
   where run v m = case runReader (runListT m) v of
           Nil -> []
           Cons x xs -> x : run (Just x) xs
+------
 
 
 --partitions :: Eq a => [a] -> [([a], [a])]
