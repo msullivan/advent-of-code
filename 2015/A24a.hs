@@ -12,7 +12,7 @@ import qualified Data.Map as Map
 
 ------
 -- Pruning search monad
-type Prune r a = ListT (Reader (Maybe r)) a
+type Prune r a = ListT (Reader r) a
 
 pick :: [a] -> Prune r a
 pick = fromList
@@ -20,15 +20,13 @@ pick = fromList
 prune :: (a -> Bool) -> Prune a ()
 prune f =
   do v <- lift ask
-     case v of
-       Nothing -> return ()
-       Just v' -> guard $ f v'
+     guard $ f v
 
-runPrune :: Prune a a -> [a]
-runPrune m = run Nothing m
+runPrune :: (a -> r -> r) -> r -> Prune r a -> [a]
+runPrune f v m = run v m
   where run v m = case runReader (runListT m) v of
           Nil -> []
-          Cons x xs -> x : run (Just x) xs
+          Cons x xs -> x : run (f x v) xs
 ------
 
 
@@ -53,7 +51,7 @@ search packages =
 pack packages = search packages
 
 --solve :: String -> Int
-solve = runPrune . pack . map read . lines
+solve = runPrune const (100000000,0) . pack . map read . lines
 
 answer f = interact $ (++"\n") . show . f
 main = answer solve
