@@ -23,9 +23,9 @@ rsplitOn1 a b = fromJust $ stripInfixEnd a b
 
 decompress ('(':xs) =
   let (lol, ys) = splitOn1 ")" xs
-      (n, m) = splitOn1 "x" lol
-      rep = take (iread n) ys
-  in concat (replicate (iread m) rep) ++ decompress (drop (iread n) ys)
+      [n, m] = map iread $ splitOn "x" lol
+      rep = take n ys
+  in concat (replicate m rep) ++ decompress (drop n ys)
 decompress (x:xs) = x : decompress xs
 decompress [] = []
 
