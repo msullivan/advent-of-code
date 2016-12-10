@@ -11,8 +11,8 @@ splitOn1 a b = fromJust $ stripInfix a b
 decompress ('(':xs) =
   let (lol, ys) = splitOn1 ")" xs
       [n, m] = map read $ splitOn "x" lol
-      rep = take n ys
-  in (m * (decompress rep)) + decompress (drop n ys)
+      (rep, rest) = splitAt n ys
+  in (m * (decompress rep)) + decompress rest
 decompress (x:xs) = 1 + (decompress xs)
 decompress [] = 0
 
