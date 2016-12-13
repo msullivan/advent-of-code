@@ -1,3 +1,5 @@
+-- XXX: doesn't work at all
+
 -- For Prune
 import Control.Monad
 import Control.Monad.Reader
@@ -47,19 +49,18 @@ runPrune f s v m = run s v m
 
 --------
 
-{-
+
 stuff = map sort $ [
   ["SG", "SM", "PG", "PM"],
   ["TG", "RG", "RM", "CG", "CM"],
   ["TM"],
   []]
--}
-stuff = map sort $ [
+
+stuff' = map sort $ [
   ["HM", "LM"],
   ["HG"],
   ["LG"],
   []]
-
 
 oneThings xs =
   do x <- xs
@@ -91,29 +92,30 @@ next (i, state) =
      parts <- things xs
      i' <- [i-1, i+1]
      guard $ i' >= 0 && i' <= 3
+     guard $ length parts == 1 || i' == i+1
      let state' = replaceAtIndex i (xs \\ parts) (replaceAtIndex i' (sort (parts ++ (state !! i'))) state)
      guard $ all linesafe state'
      return (i', state')
 
-type Table = Map.Map (Int, [[String]]) ()
+type Table = Map.Map (Int, [[String]]) Int
 traceNus x = traceShow x x
 --traceA = traceShow
 traceA a b = b
 
 
-search :: (Int, [[String]]) -> Int -> Prune Table Int (Int, (Int, [[String]]))
+search :: (Int, [[String]]) -> Int -> Prune Table Int Int
 search st k =
-  if done (snd st) then return (k, st) else
+  if done (snd st) then return (k) else
   do m <- lift get
-     let m' = Map.insert st () m
+     let m' = Map.insert st k m
      lift $ put m'
-     prune (k<)
+     prune ((k+1)<)
      st' <- pick $ next st
-     guard $ not (Map.member st' m')
+     guard $ (fromMaybe 1000000000 (Map.lookup st' m')) > k
      search (traceA (k, st') st') (k+1)
 
 
-solve = runPrune (\x y -> fst x) Map.empty  (40 :: Int) $ search (0, stuff) 0
+solve lol k = runPrune (\x y -> x) Map.empty (k :: Int) $ search (0, lol) 0
 
 
     {-
