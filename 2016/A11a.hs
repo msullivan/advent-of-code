@@ -1,5 +1,3 @@
--- XXX: doesn't work at all
-
 -- For Prune
 import Control.Monad
 import Control.Monad.Reader
@@ -12,6 +10,10 @@ import Data.List.Extra
 import Data.Maybe
 import qualified Data.Char as C
 import qualified Data.Map as Map
+--
+import qualified Data.Sequence as S
+import Data.Sequence ((<|), (|>), (><), ViewL(..))
+
 
 import Debug.Trace
 
@@ -62,6 +64,12 @@ stuff' = map sort $ [
   ["LG"],
   []]
 
+stuff'' = map sort $ [
+  ["HM", "HG"],
+  [],
+  [],
+  []]
+
 oneThings xs =
   do x <- xs
      return [x]
@@ -86,40 +94,30 @@ done [[], [], [], _] = True
 done _ = False
 
 
-next :: (Int, [[String]]) -> [(Int, [[String]])]
-next (i, state) =
-  do let xs = state !! i
+next :: Table -> (Int, (Int, [[String]])) -> [(Int, (Int, [[String]]))]
+next map (k, (i, state)) =
+  do guard $ Map.notMember (i, state) map
+     let xs = state !! i
      parts <- things xs
      i' <- [i-1, i+1]
      guard $ i' >= 0 && i' <= 3
-     guard $ length parts == 1 || i' == i+1
+--     guard $ length parts == 1 || i' == i+1
      let state' = replaceAtIndex i (xs \\ parts) (replaceAtIndex i' (sort (parts ++ (state !! i'))) state)
      guard $ all linesafe state'
-     return (i', state')
+     guard $ Map.notMember (i', state') map
+     return (k+1, traceA (map, (i', state')) (i', state'))
 
-type Table = Map.Map (Int, [[String]]) Int
+type Table = Map.Map (Int, [[String]]) ()
 traceNus x = traceShow x x
 --traceA = traceShow
 traceA a b = b
 
 
-search :: (Int, [[String]]) -> Int -> Prune Table Int Int
-search st k =
-  if done (snd st) then return (k) else
-  do m <- lift get
-     let m' = Map.insert st k m
-     lift $ put m'
-     prune ((k+1)<)
-     st' <- pick $ next st
-     guard $ (fromMaybe 1000000000 (Map.lookup st' m')) > k
-     search (traceA (k, st') st') (k+1)
+search seen nus = case S.viewl nus of
+  (k,st) :< rest ->
+    if done (snd st) then k else
+      search seen' $ rest >< (S.fromList $ next seen (k,st))
+    where seen' = Map.insert st () seen
 
 
-solve lol k = runPrune (\x y -> x) Map.empty (k :: Int) $ search (0, lol) 0
-
-
-    {-
-load = map iread . words
-
-main = answer $ length . filter check . map load . lines
--}
+main = putStrLn $ show $ search Map.empty (S.fromList [(0,(0,stuff))])
