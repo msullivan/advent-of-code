@@ -1,9 +1,6 @@
--- For Prune
-import Control.Monad
-import Control.Monad.Reader
-import Control.Monad.RWS
-import Control.Monad.ListT
-import Data.List.Class
+-- Part B also
+-- Does part A in 11s, part B in ~20m
+
 --
 import Control.Monad
 import Data.List.Extra
@@ -17,39 +14,21 @@ import Data.Sequence ((<|), (|>), (><), ViewL(..))
 
 import Debug.Trace
 
-------
-iread :: String -> Int
-iread = read
-
-answer :: (Show a) => (String -> a) -> IO ()
-answer f = interact $ (++"\n") . show . f
-
-ord0 c = C.ord c - C.ord 'a'
-chr0 i = C.chr (i + C.ord 'a')
-incletter c i = chr0 ((ord0 c + i) `mod` 26)
-
-splitOn1 a b = fromJust $ stripInfix a b
-rsplitOn1 a b = fromJust $ stripInfixEnd a b
-
--- Pruning search monad
-type Prune s r a = ListT (RWS r () s) a
-
-pick :: [a] -> Prune s r a
-pick = fromList
-
-prune :: (a -> Bool) -> Prune s a ()
-prune f =
-  do v <- lift ask
-     guard $ f v
-
-runPrune :: (a -> r -> r) -> s -> r -> Prune s r a -> [a]
-runPrune f s v m = run s v m
-  where run s v m = case runRWS (runListT m) v s of
-          (Nil, _, _) -> []
-          (Cons x xs, s, _) -> x : run s (f x v) xs
-------
 
 --------
+type Queue a = ([a], [a])
+
+revApp [] ys = ys
+revApp (x:xs) ys = revApp xs (x:ys)
+
+enq (f, b) x = (f, revApp x b)
+view ([], []) = Nothing
+view (x:xs, b) = Just (x, (xs, b))
+view ([], b) = view (reverse b, [])
+
+qFromList x = (x, [])
+
+-------------
 
 
 stuff = map sort $ [
@@ -57,6 +36,13 @@ stuff = map sort $ [
   ["TG", "RG", "RM", "CG", "CM"],
   ["TM"],
   []]
+
+stuff_b = map sort $ [
+  ["SG", "SM", "PG", "PM", "EG", "EM", "DG", "DM"],
+  ["TG", "RG", "RM", "CG", "CM"],
+  ["TM"],
+  []]
+
 
 stuff' = map sort $ [
   ["HM", "LM"],
@@ -112,12 +98,17 @@ traceNus x = traceShow x x
 --traceA = traceShow
 traceA a b = b
 
-
+{-
+search seen nus = case view nus of
+  Just ((k,st), rest) ->
+    if done (snd st) then k else
+      search seen' $ rest `enq` (next seen (k,st))
+    where seen' = Map.insert st () seen
+-}
 search seen nus = case S.viewl nus of
   (k,st) :< rest ->
     if done (snd st) then k else
       search seen' $ rest >< (S.fromList $ next seen (k,st))
     where seen' = Map.insert st () seen
 
-
-main = putStrLn $ show $ search Map.empty (S.fromList [(0,(0,stuff))])
+main = putStrLn $ show $ search Map.empty (S.fromList [(0,(0,stuff_b))])
