@@ -8,14 +8,15 @@ import Data.Maybe
 import qualified Data.Char as C
 import qualified Data.Map as Map
 --
-import qualified Data.Sequence as S
-import Data.Sequence ((<|), (|>), (><), ViewL(..))
+--import qualified Data.Sequence as S
+--import Data.Sequence ((<|), (|>), (><), ViewL(..))
 
 
 import Debug.Trace
 
 
 --------
+{-
 type Queue a = ([a], [a])
 
 revApp [] ys = ys
@@ -27,7 +28,7 @@ view (x:xs, b) = Just (x, (xs, b))
 view ([], b) = view (reverse b, [])
 
 qFromList x = (x, [])
-
+-}
 -------------
 
 
@@ -80,8 +81,8 @@ done [[], [], [], _] = True
 done _ = False
 
 
-next :: Table -> (Int, (Int, [[String]])) -> [(Int, (Int, [[String]]))]
-next map (k, (i, state)) =
+--next :: Table -> (Int, (Int, [[String]])) -> [(Int, (Int, [[String]]))]
+next map ((i, state)) =
   do guard $ Map.notMember (i, state) map
      let xs = state !! i
      parts <- things xs
@@ -91,24 +92,32 @@ next map (k, (i, state)) =
      let state' = replaceAtIndex i (xs \\ parts) (replaceAtIndex i' (sort (parts ++ (state !! i'))) state)
      guard $ all linesafe state'
      guard $ Map.notMember (i', state') map
-     return (k+1, traceA (map, (i', state')) (i', state'))
+     return (i', state')
 
 type Table = Map.Map (Int, [[String]]) ()
 traceNus x = traceShow x x
 --traceA = traceShow
 traceA a b = b
 
-{-
-search seen nus = case view nus of
-  Just ((k,st), rest) ->
+
+search k seen ([], stuff) = traceShow (k, Map.size seen, length nextStuff) $
+                            search (k+1) seen (nextStuff, [])
+  where nextStuff = concat stuff
+search k seen (st:rest, stuff) =
     if done (snd st) then k else
-      search seen' $ rest `enq` (next seen (k,st))
+      search k seen' $ (rest, next seen st : stuff)
     where seen' = Map.insert st () seen
--}
+searchStart st = search 0 Map.empty ([((0,st))], [])
+
+{-
+-- This was a previous version that relied on next keep track of lengths
+
 search seen nus = case S.viewl nus of
   (k,st) :< rest ->
     if done (snd st) then k else
       search seen' $ rest >< (S.fromList $ next seen (k,st))
     where seen' = Map.insert st () seen
+searchStart st = search Map.empty (S.fromList [(0,(0,stuff))])
+-}
 
-main = putStrLn $ show $ search Map.empty (S.fromList [(0,(0,stuff_b))])
+main = putStrLn $ show $ searchStart stuff_b
