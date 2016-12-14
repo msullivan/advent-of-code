@@ -1,11 +1,10 @@
 -- ASDF. Data.Hash.MD5 appeared to suck.
 
 import Data.List
-import Data.Maybe
 import qualified Crypto.Hash.MD5 as MD5
-import Debug.Trace
 import qualified Data.ByteString.Char8 as BS
 import qualified Data.ByteString.Base16 as B16
+import Debug.Trace
 
 
 key = "yjdafjpo"
