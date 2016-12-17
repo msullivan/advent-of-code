@@ -1,22 +1,21 @@
 -- both parts
 
 import Data.List.Extra
+import Data.Char
 
-input = "01111001100111011"
+input = map digitToInt "01111001100111011"
 
 step a =
-  let b = map (\x -> if x == '0' then '1' else '0') $ reverse a
-  in a ++ "0" ++ b
+  let b = map (1-) $ reverse a
+  in a ++ [0] ++ b
 
-make a len =
-  if length a >= len then a else make (step a) len
+make a len = until ((len <=) . length) step a
 
 cksum' [] = []
 cksum' (x:y:xs) = c : cksum' xs
   where c = if x == y then '1' else '0'
 
-cksum s = if even (length s') then cksum s' else s'
-  where s' = cksum' s
+cksum = until (odd . length) cksum' . cksum'
 
 -- when actually doing it I just poked at things in ghci though
 solve len = cksum $ take len $ make input len

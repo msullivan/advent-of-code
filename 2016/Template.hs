@@ -18,13 +18,17 @@ incletter c i = chr0 ((ord0 c + i) `mod` 26)
 splitOn1 a b = fromJust $ stripInfix a b
 rsplitOn1 a b = fromJust $ stripInfixEnd a b
 
+-- pull out every part of a String that can be read in
+-- for some Read a and ignore the rest
+readOut :: Read a => String -> [a]
+readOut "" = []
+readOut s = case reads s of
+  [] -> readOut $ tail s
+  [(x, s')] -> x : readOut s'
+  _ -> error "ambiguous parse"
+ireadOut :: String -> [Int]
+ireadOut = readOut
 
 --------
 
-check :: [Int] -> Bool
-check x = let [a,b,c] = sort x
-          in a+b > c
-
-load = map iread . words
-
-main = answer $ length . filter check . map load . lines
+main = answer $ length . lines

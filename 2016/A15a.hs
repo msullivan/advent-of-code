@@ -1,3 +1,12 @@
+-- This is a hilariously dumb solution.
+
+-- It didn't occur to me to use modular arithmetic until I had already
+-- finished.  The first thing that popped into my head was to simulate
+-- the circular disks using infinite lists. And I made the leaderboard
+-- sooooooooo lol.
+
+-- both parts
+
 import Data.List.Extra
 
 stuff = map make [
