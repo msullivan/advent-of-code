@@ -30,7 +30,13 @@ ireadOut :: String -> [Int]
 ireadOut = readOut
 
 --------
+munge [a,b,c,d,e,f] = ((a,b), (c,d,e,f))
 
+viable (c, (_, used, _, _)) (c', (_, _, avail, _)) =
+  c /= c' && avail >= used && used > 0
 
+findMatch stuff c = map (\x -> (c,x)) $ filter (viable c) stuff
+getallviable ls = concatMap (findMatch ls) ls
 
-main = answer $ map ireadOut . lines
+main = answer $ length . getallviable . map (munge . ireadOut) . lines
+--main = answer $ length $ map (munge . ireadOut) . lines
