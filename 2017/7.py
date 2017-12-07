@@ -11,7 +11,16 @@ def check(tree, weights, root):
         # For my original version I didn't actually solve the problem
         # in code I just found it manually after dumping all this
         # info.
-        print(root, tree[root], [weights[k] for k in tree[root]], kids_weights)
+        d_weights = [weights[k] for k in tree[root]]
+        #print(root, tree[root], d_weights, kids_weights)
+        # This is code I wrote after to do it honestly:
+        # There need to be at least 3 elements for the thing to make sense.
+        sweights = sorted(kids_weights)
+        wrong = sweights[0] if sweights[0] != sweights[1] else sweights[-1]
+        diff = sweights[1] - wrong
+        idx = kids_weights.index(wrong)
+        print(d_weights[idx] + diff)
+
         sys.exit(0)
     return weights[root]+sum(kids_weights)
 
