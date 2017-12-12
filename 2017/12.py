@@ -2,14 +2,11 @@
 
 import sys
 
-# copied from some other code I wrote sometime
-def dfs(graph, seen, node, val=0, ordering=None):
-    if node in seen: return
-
-    seen[node] = val
-    for child in graph[node]:
-        dfs(graph, seen, child, val, ordering)
-    if ordering is not None: ordering.append(node)
+def dfs(graph, seen, nobe):
+    if nobe in seen: return
+    seen.add(nobe)
+    for child in graph[nobe]:
+        dfs(graph, seen, child)
 
 def main(args):
     data = [s.strip() for s in sys.stdin]
@@ -19,7 +16,7 @@ def main(args):
         vs = vs.split(", ")
         graph[k] = set(vs)
 
-    seen = {}
+    seen = set()
     dfs(graph, seen, "0")
     print(len(seen))
 
