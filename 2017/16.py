@@ -21,7 +21,6 @@ def round(things, data):
 def main(args):
     data = [s.strip() for s in sys.stdin]
     data = data[0].split(",")
-    print(len(data))
 
     seen = {}
     things = [chr(ord('a')+i) for i in range(16)]
@@ -32,16 +31,13 @@ def main(args):
     while True:
         s = ''.join(things)
         if s in seen: break
-#        print(s, seen)
         seen[s] = n
         things = round(things, data)
-        n+=1
+        n += 1
 
-    print(n, seen[s])
-    k = 1000000000 % n
-    print(seen[s])
-    print(''.join(things))
-    print(k, seen)
+    loop = n - seen[s]
+    k = (1000000000 - seen[s]) % loop + seen[s]
+    print([k2 for k2,v in seen.items() if k == v][0])
 
 
 if __name__ == '__main__':
