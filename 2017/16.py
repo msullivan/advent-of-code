@@ -35,8 +35,8 @@ def main(args):
         things = round(things, data)
         n += 1
 
-    loop = n - seen[s]
-    k = (1000000000 - seen[s]) % loop + seen[s]
+    # fun fact: round is injective so the first element is always on the cycle
+    k = (1000000000) % n
     print([k2 for k2,v in seen.items() if k == v][0])
 
 
