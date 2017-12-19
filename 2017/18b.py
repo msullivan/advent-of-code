@@ -1,49 +1,38 @@
 #!/usr/bin/env python3
 
 import sys
+from collections import defaultdict
 
 def read(regs, s):
-    if s.isalpha():
-        if s not in regs:
-            regs[s] = 0
-        return regs[s]
-    else:
-        return int(s)
-
+    return regs[s] if s.isalpha() else int(s)
 
 def step(data, regs, ip, inq, outq):
-    cmd = data[ip].split(" ")
-    if cmd[0] == "snd":
-        sound = read(regs, cmd[1])
-        outq += [sound]
-    elif cmd[0] == "set":
-        regs[cmd[1]] = read(regs, cmd[2])
-    elif cmd[0] == "add":
-        regs[cmd[1]] = read(regs, cmd[1]) + read(regs, cmd[2])
-    elif cmd[0] == "mul":
-        regs[cmd[1]] = read(regs, cmd[1]) * read(regs, cmd[2])
-    elif cmd[0] == "mod":
-        regs[cmd[1]] = read(regs, cmd[1]) % read(regs, cmd[2])
-    elif cmd[0] == "rcv":
+    op, Rs, Rd = data[ip]
+    Vs, Vd = read(regs, Rs), read(regs, Rd)
+
+    if op == "snd":
+        outq.append(Vs)
+    elif op == "set":
+        regs[Rs] = Vd
+    elif op == "add":
+        regs[Rs] += Vd
+    elif op == "mul":
+        regs[Rs] *= Vd
+    elif op == "mod":
+        regs[Rs] %= Vd
+    elif op == "rcv":
         if not inq: return None
-        regs[cmd[1]] = inq[0]
-        inq.pop(0)
-    elif cmd[0] == "jgz":
-        if read(regs, cmd[1]) > 0:
-            ip += read(regs, cmd[2])
-            return ip
-    ip += 1
-    return ip
+        regs[Rs] = inq.pop(0)
+    elif op == "jgz":
+        if Vs > 0:
+            return ip + Vd
+    return ip + 1
 
 def main(args):
-    data = [s.strip() for s in sys.stdin]
+    data = [tuple(s.strip().split(" ")+['-1'])[:3] for s in sys.stdin]
 
-    regsa = {'p': 0}
-    regsb = {'p': 1}
-    ina = []
-    inb = []
-    ipa = 0
-    ipb = 0
+    regsa, ina, ipa = defaultdict(int, {'p': 0}), [], 0
+    regsb, inb, ipb = defaultdict(int, {'p': 1}), [], 0
     snds = 0
 
     while True:
@@ -52,7 +41,7 @@ def main(args):
             if nextip is None: break
             ipa = nextip
         while True:
-            if data[ipb].split(" ")[0] == "snd": snds+=1
+            if data[ipb][0] == "snd": snds+=1
             nextip = step(data, regsb, ipb, inb, ina)
             if nextip is None: break
             ipb = nextip
