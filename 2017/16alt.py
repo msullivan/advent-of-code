@@ -23,10 +23,10 @@ def round(things, data):
 def apply(xs, perm):
     return [xs[perm[i]] for i in range(len(xs))]
 
-def pow(xs, perm, n):
+def pow(xs, n):
     if n == 0:
         return list(range(len(xs)))
-    sub = pow(xs, perm, n // 2)
+    sub = pow(xs, n // 2)
     sub = apply(sub, sub)
     if n % 2 == 1:
         sub = apply(xs, sub)
@@ -45,8 +45,8 @@ def main(args):
     things = [chr(ord('a')+i) for i in range(16)]
     P = indexes(round(list(things), Pdata))
 
-    things = apply(things, pow(X, X, 1000000000))
-    idxs = apply(indexes(things), pow(P, P, 1000000000))
+    things = apply(things, pow(X, 1000000000))
+    idxs = apply(indexes(things), pow(P, 1000000000))
     letters = [chr(ord('a')+idxs.index(i)) for i in range(16)]
     print(''.join(letters))
 
