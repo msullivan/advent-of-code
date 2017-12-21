@@ -18,7 +18,7 @@ def dchunks(l, n):
 #    print(s, grid)
     for i in range(s):
         for j in range(s):
-            part = [[None]*n for i in range(n)]
+            part = [[None]*n for z in range(n)]
             for x in range(n):
                 for y in range(n):
 #                    print(part, i, j, x, y)
