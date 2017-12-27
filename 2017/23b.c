@@ -82,7 +82,12 @@ void func(long a) {
 			e = b;
 
 			d++;
-		} while (d != b);
+		//} while (d != b);
+		// I didn't have this optimization in my original solve but it cuts
+		// running time from ~1s to ~15ms.
+		// For my original solution I really just analzyed the absolute
+		// innermost loop, replaced it with a mod
+		} while (d*d < b);
 		if (f == 0) {
 			h++;
 		}
