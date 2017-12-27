@@ -3,24 +3,41 @@
 import sys
 from collections import defaultdict
 
-L = -1
-R = 1
-# I was just a bum and typed in the turing machine diagram of course.
-machine = {
-    'A': [(1, R, 'B'), (0, R, 'C')],
-    'B': [(0, L, 'A'), (0, R, 'D')],
-    'C': [(1, R, 'D'), (1, R, 'A')],
-    'D': [(1, L, 'E'), (0, L, 'D')],
-    'E': [(1, R, 'F'), (1, L, 'B')],
-    'F': [(1, R, 'A'), (1, R, 'E')],
-}
+# This is the second version.
+# The original version I wrote for leaderboard contention I just
+# manually transcribed the turning machine transition function
+# into a dictionary, of course.
+# That was the obviously faster thing for N=6.
+# At N=50 I would have definitely been better parsing it. At N=20
+# I am not sure which would be better but I would have lost a bunch
+# of time waffling about it.
 
+def parse_thing(data):
+    dir = -1 if data[1] == "left" else +1
+    return (int(data[0]), dir, data[2])
+
+def parse(data):
+    machine = {}
+    odata = [s.replace(".", "").replace(":", "").split(" ") for s in data]
+    data = [x[-1] for x in odata]
+
+    start = data[0]
+    steps = int(odata[1][-2])
+    i = 3
+    while i < len(data):
+        state = data[i]
+        machine[state] = (parse_thing(data[i+2:i+5]),
+                          parse_thing(data[i+6:i+9]))
+        print(machine)
+        i += 10
+    return (start, steps, machine)
 
 def main(args):
+    data = [s.strip() for s in sys.stdin]
+
     tape = defaultdict(int)
-    size = 12399302
+    state, size, machine = parse(data)
     pos = 0
-    state = 'A'
     for i in range(size):
         val, dir, new = machine[state][tape[pos]]
         tape[pos] = val
