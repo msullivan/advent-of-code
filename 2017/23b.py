@@ -6,8 +6,15 @@
 import sys
 from collections import defaultdict
 
+def isreg(s): return s.isalpha()
+def isconst(s): return not isreg(s)
+
 def read(regs, s):
-    return regs[s] if s.isalpha() else int(s)
+    return regs[s] if isreg(s) else int(s)
+
+def getconst(s):
+    return int(s) if isconst(s) else None
+
 
 def step(data, regs, ip):
     op, Rs, Rd = data[ip]
@@ -51,13 +58,58 @@ def label(prog):
     for ip, (op, Rs, Rd) in enumerate(prog):
         if ip in targets:
             print(targets[ip]+":")
-        if op == "jnz" and not Rd.isalpha():
+        if op == "jnz" and isconst(Rd):
             Rd = targets[ip + int(Rd)]
         print("\t" + " ".join([op, Rs, Rd]))
 
     for ip, label in targets.items():
         if ip >= len(prog):
             print(label+":")
+
+def to_c(prog):
+    targets = find_targets(prog)
+    print("""\
+long mul_count;
+long func(long a) {
+    long b, c, d, e, f, g, h;
+    b = c = d = e = f = g = h = 0;
+    mul_count = 0;
+""")
+
+    for ip, (op, Rs, Rd) in enumerate(prog):
+        Vs, Vd = getconst(Rs), getconst(Rd)
+        if ip in targets:
+            print("\n"+targets[ip]+":")
+        if op == "set":
+            print("    {} = {};".format(Rs, Rd))
+        elif op == "sub":
+            if Vd is not None and Vd < 0:
+                print("    {} += {};".format(Rs, -Vd))
+            else:
+                print("    {} -= {};".format(Rs, Rd))
+        elif op == "mul":
+            print("    {} *= {}; mul_count++;".format(Rs, Rd))
+        elif op == "mod":
+            print("    {} %= {};".format(Rs, Rd))
+        elif op == "jnz":
+            if isreg(Rd):
+                tgt = Rd+"/*DYNAMIC???!!*/"
+            else:
+                tgt = targets[ip+Vd]
+
+            if Vs is not None and Vs != 0:
+                print("    goto {};".format(tgt))
+            else:
+                print("    if ({}) goto {};".format(Rs, tgt))
+
+    print("")
+    for ip, label in targets.items():
+        if ip >= len(prog):
+            print(label+":")
+    print("""\
+    return h;
+}
+""")
 
 def run(prog):
     regsa, ina, ipa = defaultdict(int, {'p': 0}), [], 0
@@ -76,7 +128,8 @@ def run(prog):
 def main(args):
     data = [tuple(s.strip().split(" ")+[''])[:3] for s in sys.stdin]
 
-    label(data)
+    #    label(data)
+    to_c(data)
 
 
 if __name__ == '__main__':
