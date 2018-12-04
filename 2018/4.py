@@ -8,24 +8,22 @@ def extract(s):
     return [int(x) for x in re.findall(r'\d+', s)]
 
 def main(args):
-    data = [s.strip() for s in sys.stdin]
-    data = sorted([(extract(s), s.split(" ")[3]) for s in data])
-    guard = -1
+    data = sorted([extract(s) for s in sys.stdin])
     i = 0
 
     sleep_time = defaultdict(int)
     most_common = defaultdict(lambda: defaultdict(int))
 
     while i < len(data):
-        times, thing = data[i]
+        times = data[i]
         guard = times[-1]
         i += 1
         while True:
-            if i >= len(data) or len(data[i][0]) == 6:
+            if i >= len(data) or len(data[i]) == 6:
                 break
 
-            start = data[i][0][4]
-            stop = data[i+1][0][4]
+            start = data[i][4]
+            stop = data[i+1][4]
             sleep_time[guard] += (stop - start)
             for j in range(start, stop):
                 most_common[guard][j] += 1
