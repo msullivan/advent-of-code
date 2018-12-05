@@ -1,11 +1,6 @@
 #!/usr/bin/env python3
 
-from collections import defaultdict
 import sys
-import re
-
-def extract(s):
-    return [int(x) for x in re.findall(r'-?\d+', s)]
 
 def main(args):
     data = list([s.strip() for s in sys.stdin][0])

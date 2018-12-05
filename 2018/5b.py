@@ -3,12 +3,7 @@
 # This is a really dumb implementation that nevertheless got me on the
 # leaderboard. A good implementation is in 5balt.
 
-from collections import defaultdict
 import sys
-import re
-
-def extract(s):
-    return [int(x) for x in re.findall(r'-?\d+', s)]
 
 def doit(data):
     changed = True
