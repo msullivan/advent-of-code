@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
 
-# This is a really dumb implementation that nevertheless got me on the
-# leaderboard. A good implementation is in 5balt.
-
 from collections import defaultdict
 import sys
 import re
@@ -11,21 +8,16 @@ def extract(s):
     return [int(x) for x in re.findall(r'-?\d+', s)]
 
 def doit(data):
-    changed = True
-    while changed:
-        changed = False
-        new = []
-        i = 0
-        while i < len(data):
-            if i + 1 < len(data) and data[i] != data[i+1] and data[i].upper() == data[i+1].upper():
-                changed = True
-                i += 2
-            else:
-                new.append(data[i])
-                i += 1
-        data = new
+    out = []
+    i = 0
+    while i < len(data):
+        if out and data[i] != out[-1] and data[i].upper() == out[-1].upper():
+            out.pop()
+        else:
+            out.append(data[i])
+        i += 1
 
-    return (len(data))
+    return (len(out))
 
 def main(data):
     data = [s.strip() for s in sys.stdin][0]
