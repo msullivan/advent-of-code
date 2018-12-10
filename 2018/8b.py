@@ -4,8 +4,6 @@ import sys
 from collections import defaultdict, deque
 from dataclasses import dataclass
 
-sys.setrecursionlimit(20000)
-
 @dataclass
 class Nobe:
     children: object
