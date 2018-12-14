@@ -5,10 +5,6 @@ from collections import defaultdict, deque
 #from dataclasses import dataclass
 
 def main(args):
-    size = 20
-    if args[1:]:
-        size = int(args[1])
-
     data = [s.strip() for s in sys.stdin]
 
     initial = data[0].split(" ")[2]
@@ -19,7 +15,9 @@ def main(args):
     for i, x in enumerate(initial):
         plants[i] = x
 
-    for i in range(size):
+    for i in range(200):
+        print(''.join(plants[j] for j in range(-50, 150)))
+
         new = defaultdict(lambda: '.')
         bottom = min(plants.keys())
         top = max(plants.keys())

@@ -132,18 +132,22 @@ def largest_power_2(n):
     return 1 << (n.bit_length() - 1)
 
 def main(args):
+    target = 50_000_000_000
+    if args[1:]:
+        target = int(args[1])
+
     data = [s.strip() for s in sys.stdin]
     stuff = [x.split(' ') for x in data[2:]]
     stuff = dict([(x, z) for x, _, z in stuff])
     update_rule.update(stuff)
 
     initial = data[0].split(" ")[2]
-    initial += '.' * (next_power_2(len(initial)) - len(initial))
+    size = max(next_power_2(len(initial)), 8)
+    initial += '.' * (size - len(initial))
 
     state_0 = new_plants(initial)
     state = new(empty(state_0.level), state_0)
 
-    target = 50_000_000_000
     steps = 0
     while steps < target:
         state = expand(expand(state))
@@ -154,7 +158,7 @@ def main(args):
             state = step(state, 0)
         else:
             small_step = largest_power_2(target - steps)
-            print("stepping", small_step)
+            print("under stepping", small_step)
             steps += small_step
             idx = state.level - 2 - small_step.bit_length()
             state = step(state, idx)
