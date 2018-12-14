@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
+"""A hashlife style solution for day 12.
+
+TODO: document this!
+"""
 
 from __future__ import annotations
 
 import sys
-sys.excepthook = sys.__excepthook__
+sys.excepthook = sys.__excepthook__  # I am so mad about ubuntu's excepthook
 
 from collections import defaultdict, deque
 from typing import Dict, Union, Tuple, Optional, Any
@@ -18,30 +22,38 @@ class Node:
     live: int
     # The score if the left hand of the node was at 0
     score: int
+    next: Optional[Node] = None
+
+    def centered_score(self) -> int:
+        return self.score - self.live * (1 << (self.level - 1))
+
+class EmptyLeafNode(Node):
+    def __init__(self) -> None:
+        pass
+    def __repr__(self) -> str:
+        return '<leaf>'
 
 hashconser: Dict[Union[str, Tuple[Node, Node]], Node] = {}
 update_rule: Dict[str, str] = {}
+
 step_cache: Dict[Tuple[Node, int], Node] = {}
 
-# XXX: do something more clever!
-dummy: Any = None
+LEAF = EmptyLeafNode()
 
 def new_plants(plants: str) -> Node:
     if plants not in hashconser:
-        print(plants)
         # NB must be a power of 2
         if len(plants) > 2:
             i = len(plants) // 2
             hashconser[plants] = new(new_plants(plants[:i]), new_plants(plants[i:]))
         else:
             real = [i for i, v in enumerate(plants) if v == '#']
-            hashconser[plants] = Node(1, dummy, dummy, plants, len(real), sum(real))
+            hashconser[plants] = Node(1, LEAF, LEAF, plants, len(real), sum(real))
     return hashconser[plants]
 
 def new(left: Node, right: Node) -> Node:
     key = (left, right)
     if key not in hashconser:
-        print(left.level, right.level)
         assert left.level == right.level
         plants = ""
         # cache plants in nodes up to size 8
@@ -62,7 +74,10 @@ def step_leaf(leaf: Node) -> Node:
 
 def step_interior(node: Node, to_skip: int) -> Node:
     """Step an interior node of level n, producing a node of level n-1"""
-    if (node, to_skip) in step_cache:
+    assert node.level > 3
+    if to_skip == 0 and node.next:
+        return node.next
+    elif to_skip > 0 and (node, to_skip) in step_cache:
         return step_cache[node, to_skip]
 
     next = max(to_skip - 1, 0)
@@ -70,14 +85,20 @@ def step_interior(node: Node, to_skip: int) -> Node:
     right = step(node.right, next)
     mid = step(new(node.left.right, node.right.left), next)
 
-    n0 = new(left.right, mid.left)
-    n1 = new(mid.right, right.left)
-    if to_skip == 0:
-        n0 = step(n0, 0)
-        n1 = step(n0, 1)
+    if to_skip > 0:
+        val = new(
+            new(left.right, mid.left),
+            new(mid.right, right.left)
+        )
+        step_cache[node, to_skip] = val
+    else:
+        val = new(
+            step(new(left, mid), 0),
+            step(new(mid, right), 0)
+        )
+        node.__dict__['next'] = val
 
-    step_cache[node, to_skip] = new(n0, n1)
-    return step_cache[node, to_skip]
+    return val
 
 def step(node: Node, to_skip: int) -> Node:
     """Evaluate a node of level n, producing a node of level n-1"""
@@ -105,7 +126,10 @@ def try_shrink(node: Node) -> Node:
         return node
 
 def next_power_2(x):
-    return 1<<(x-1).bit_length()
+    return 1 << (x-1).bit_length()
+
+def largest_power_2(n):
+    return 1 << (n.bit_length() - 1)
 
 def main(args):
     data = [s.strip() for s in sys.stdin]
@@ -114,60 +138,31 @@ def main(args):
     update_rule.update(stuff)
 
     initial = data[0].split(" ")[2]
-    print(len(initial))
     initial += '.' * (next_power_2(len(initial)) - len(initial))
-    print(len(initial))
 
     state_0 = new_plants(initial)
     state = new(empty(state_0.level), state_0)
-    print(state)
-    print(len(hashconser))
 
-    # TEST
-    plants = defaultdict(lambda: '.')
-    for i, x in enumerate(initial):
-        plants[i] = x
-    real = tuple(k for k, v in plants.items() if v == '#')
-    print(i, len(real), real, sum(real))
-
-    for i in range(20):
+    target = 50_000_000_000
+    steps = 0
+    while steps < target:
         state = expand(expand(state))
-        state = step(state, state.level)
-        state = try_shrink(state)
+        natural_amount = 1 << (state.level - 3)
+        if steps + natural_amount <= target:
+            print("stepping", natural_amount)
+            steps += natural_amount
+            state = step(state, 0)
+        else:
+            small_step = largest_power_2(target - steps)
+            print("stepping", small_step)
+            steps += small_step
+            idx = state.level - 2 - small_step.bit_length()
+            state = step(state, idx)
 
-    # ASDF
-    print(state.score - state.live * (1 << (state.level - 1)) , state.live)
+        print('steps={}, score={}, live={}, table size={}'.format(
+            steps, state.centered_score(), state.live, len(hashconser)))
 
-    # return
-    # stuff = [x.split(' ') for x in data[2:]]
-    # stuff = dict([(x, z) for x, _, z in stuff])
-    # update_rule.update(stuff)
-
-    # seen = {}
-
-    # for i in range(50000000000):
-    #     if i % 10000 == 0: print(i)
-    #     new = defaultdict(lambda: '.')
-    #     bottom = min(plants.keys())
-    #     top = max(plants.keys())
-    #     for j in range(bottom-3, top+3):
-    #         key = "".join(plants[k] for k in range(j-2, j+3))
-    #         assert len(key) == 5
-    #         new[j] = stuff[key]
-    #     plants = new
-    #     real = tuple(k for k, v in plants.items() if v == '#')
-    #     print(i, len(real), real, sum(real))
-    #     if real in seen:
-    #         break
-    #     seen[real] = i
-
-    # print(i, seen[real])
-
-# #    print([k for k, v in stuff.items() if v == '#'])
-#     print(sum(k for k, v in plants.items() if v == '#'))
-
-    # print(initial)
-    # print(stuff)
+    print(state.centered_score())
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv))
