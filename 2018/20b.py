@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
 
-
 import sys
 from collections import defaultdict, deque
-
-sys.setrecursionlimit(1500)
 
 UP = (0, -1)
 DOWN = (0, 1)
@@ -17,11 +14,10 @@ def go(x, dir):
     dx, dy = DIRS[dir]
     return (x[0] + dx, x[1] + dy)
 
-def distances(map, y, x):
-    d = deque([(y, x)])
-#    dists = defaultdict(lambda x: 100000000000)
+def distances(map, pos):
+    d = deque([pos])
     dists = {}
-    dists[y, x] = 0
+    dists[pos] = 0
     while d:
         pos = d.popleft()
         for nbr in map[pos]:
@@ -35,12 +31,7 @@ def main(args):
     map = defaultdict(set)
 
     data = [s.strip() for s in sys.stdin]
-#    re = '(' + data[0][1:-2] + ')'
     re = data[0][1:-1]
-    print(re)
-
-    print(len([x for x in re if x == '(']))
-
 
     positions = {(0, 0)}
     stack = []
@@ -59,7 +50,6 @@ def main(args):
             npositions = set()
             for pos in positions:
                 npos = go(pos, re[j])
-#                print(pos, re[j], npos)
                 map[pos].add(npos)
                 map[npos].add(pos)
                 npositions.add(npos)
@@ -67,13 +57,12 @@ def main(args):
 
 
     print(map)
-    print(len(map))
-    print(sum([len(x) for x in map.values()]) / 2)
+    print("rooms", len(map))
+    print("doors", sum([len(x) for x in map.values()]) // 2)
 
-    dists = distances(map, 0, 0)
+    dists = distances(map, (0, 0))
+    print(max(dists.values()))
     print(len([x for x in dists.values() if x >= 1000]))
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv))
-
-# E(N|)EE
