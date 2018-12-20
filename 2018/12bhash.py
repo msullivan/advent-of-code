@@ -7,7 +7,6 @@ TODO: document this!
 from __future__ import annotations
 
 import sys
-sys.excepthook = sys.__excepthook__  # I am so mad about ubuntu's excepthook
 
 from collections import defaultdict, deque
 from typing import Dict, Union, Tuple, Optional, Any
