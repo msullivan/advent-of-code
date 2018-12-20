@@ -22,7 +22,6 @@ class Node:
     live: int
     # The score if the left hand of the node was at 0
     score: int
-    next: Optional[Node] = None
 
     def centered_score(self) -> int:
         return self.score - self.live * (1 << (self.level - 1))
@@ -68,16 +67,14 @@ def step_leaf(leaf: Node) -> Node:
     """Evaluate a size 8 node, producing a size 4 node of the middle"""
     assert leaf.level == 3
     assert len(leaf.plants) == 8
-    str = "".join(update_rule[leaf.plants[i-2:i+3]] for i in range(2, 6))
+    str = "".join(update_rule.get(leaf.plants[i-2:i+3], '.') for i in range(2, 6))
     assert len(str) == 4
     return new_plants(str)
 
 def step_interior(node: Node, to_skip: int) -> Node:
     """Step an interior node of level n, producing a node of level n-1"""
     assert node.level > 3
-    if to_skip == 0 and node.next:
-        return node.next
-    elif to_skip > 0 and (node, to_skip) in step_cache:
+    if (node, to_skip) in step_cache:
         return step_cache[node, to_skip]
 
     next = max(to_skip - 1, 0)
@@ -90,13 +87,12 @@ def step_interior(node: Node, to_skip: int) -> Node:
             new(left.right, mid.left),
             new(mid.right, right.left)
         )
-        step_cache[node, to_skip] = val
     else:
         val = new(
             step(new(left, mid), 0),
             step(new(mid, right), 0)
         )
-        node.__dict__['next'] = val
+    step_cache[node, to_skip] = val
 
     return val
 
