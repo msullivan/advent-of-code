@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.7
 """A hashlife style solution for day 12.
 
 TODO: document this!
