@@ -4,3 +4,4 @@
 *.realinput
 *.o
 *.hi
+.mypy_cache
