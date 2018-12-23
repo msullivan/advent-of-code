@@ -44,12 +44,15 @@ def main(args):
     for r, pos in data:
         cost_expr += If(z3_dist(orig, pos) <= r, 1, 0)
     opt = Optimize()
-    cost = Int('cost')
-    opt.add(cost == cost_expr)
     print("let's go")
-    h = opt.maximize(cost)
+    opt.maximize(cost_expr)
+    # I didn't do this step in my initial #2 ranking solution but I
+    # suppose you should.
+    # z3 does them lexicographically by default.
+    opt.minimize(z3_dist((0,0,0), (x, y, z)))
+
     opt.check()
-    opt.lower(h)
+
     model = opt.model()
     print(model)
     print(dist((0,0,0), (model[x].as_long(), model[y].as_long(), model[z].as_long())))
