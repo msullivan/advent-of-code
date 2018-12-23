@@ -4,9 +4,8 @@
 # the install of z3 left over from grad school so back to python 2 it
 # is!
 
-
 from __future__ import print_function
-from z3 import *
+from z3 import Int, If, Optimize
 
 import sys
 sys.setrecursionlimit(3000)
