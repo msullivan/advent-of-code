@@ -39,12 +39,14 @@ def main(args):
     y = Int('y')
     z = Int('z')
     orig = (x, y, z)
+    cost = Int('cost')
     cost_expr = x * 0
     for r, pos in data:
         cost_expr += If(z3_dist(orig, pos) <= r, 1, 0)
     opt = Optimize()
     print("let's go")
-    opt.maximize(cost_expr)
+    opt.add(cost == cost_expr)
+    opt.maximize(cost)
     # I didn't do this step in my initial #2 ranking solution but I
     # suppose you should.
     # z3 does them lexicographically by default.
@@ -53,8 +55,11 @@ def main(args):
     opt.check()
 
     model = opt.model()
-    print(model)
-    print(dist((0,0,0), (model[x].as_long(), model[y].as_long(), model[z].as_long())))
+#    print(model)
+    pos = (model[x].as_long(), model[y].as_long(), model[z].as_long())
+    print("position:", pos)
+    print("num in range:", model[cost].as_long())
+    print("distance:", dist((0,0,0), pos))
 
 
 if __name__ == '__main__':
