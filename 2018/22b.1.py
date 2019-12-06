@@ -7,7 +7,8 @@ import sys
 import re
 import time
 from functools import lru_cache
-#from dataclasses import dataclass
+from dataclasses import dataclass, field
+from heapq import heappop, heappush
 
 @lru_cache(None)
 def index(target, depth, x, y):
@@ -53,24 +54,41 @@ def edges(target, depth, x, y, gear):
     return options
 
 
+@dataclass(order=True)
+class PrioritizedItem:
+    priority: int
+    item: object=field(compare=False)
+
+
 def go(depth, target):
     tx, ty = target
 
     start = (0, 0, TORCH)  # can't enter wet, because torch
     cost = {}
     # todo = deque([start])
-    todo = [start]
+    sitem = PrioritizedItem(0, start)
+    todo = [sitem]
+    items = {start: sitem}
     cost[start] = 0
+
 
     full_target = (*target, TORCH)
 
+    hits = 0
+    fails = 0
     ta = tb = 0.0
     while todo:
         t0 = time.time()
 
+        cur = heappop(todo).item
+        if not cur:
+            fails += 1
+            continue
+        hits += 1
+
         # really this should be a PQ but oh well...
-        cur = min(todo, key=lambda x: cost[x])
-        todo.remove(cur)
+        #cur = min(todo, key=lambda x: cost[x])
+        #todo.remove(cur)
         t1 = time.time()
 
         if cur == full_target:
@@ -79,12 +97,14 @@ def go(depth, target):
         for nbr, ncost in edges(target, depth, *cur):
             assert nbr != cur, (nbr, cur)
             #print("NBR", nbr, cost.get(nbr), cost[cur], ncost)
-            if nbr not in cost:
-                todo.append(nbr)
             if nbr not in cost or cost[nbr] > cost[cur] + ncost:
-                cost[nbr] = cost[cur] + ncost
-                if nbr == full_target:
-                    print(cost[nbr])
+                item = PrioritizedItem(cost[cur] + ncost, nbr)
+
+                heappush(todo, item)
+                cost[nbr] = item.priority
+                if nbr in items:
+                    items[nbr].item = None
+                items[nbr] = item
                 #print(cost)
         t3 = time.time()
         # print("cur={}, cost={} min={:.3} nbrs={:.3} print={:.3} ratio={:.3} todo={}".format(
@@ -93,7 +113,7 @@ def go(depth, target):
         ta = t3
 
 
-    print(cur)
+    print(cur, fails, hits)
     print(cost[cur])
 
 
