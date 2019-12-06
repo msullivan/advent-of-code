@@ -9,21 +9,13 @@ import time
 def extract(s):
     return [int(x) for x in re.findall(r'-?\d+', s)]
 
-def trace(m):
-    xs, ys = zip(*m.keys())
-    minx = min(xs)
-    maxx = max(xs)
-    t0 = time.time()
-    maxy = max(y for (x, y), v in m.items() if v in "|~")
-    t1 = time.time()
+def trace(m, minx, maxx, maxy):
     lurr = "\n\n\n"
     for y in range(maxy-70, maxy+10):
-        s = ''.join(m[x,y] for x in range(minx, maxx+1))
+        s = ''.join(m[x,y] for x in range(minx-1, maxx+1))
         lurr += "{:4} {}\n".format(y, s)
-    t2 = time.time()
 
     print(lurr)
-    print("{:.3} {:.3}".format(t1 - t0, t2 - t1))
 
 def draw(m):
     xs, ys = zip(*m.keys())
@@ -50,6 +42,9 @@ def find_edge(m, x, y, dx):
         x += dx
 
 def step(m, flowing, ymax):
+    max_seen = -1
+
+    new_flowing = set()
     for x, y in list(flowing):
         if m[x,y] != '|':
             flowing.discard((x,y))
@@ -57,9 +52,11 @@ def step(m, flowing, ymax):
         if y+1 <= ymax and m[x,y+1] == ' ':
             i = 1
             while y+i <= ymax and m[x,y+i] == ' ':
+                max_seen = max(max_seen, y+i)
                 m[x,y+i] = '|'
-                flowing.add((x,y+i))
+                new_flowing.add((x,y+i))
                 i += 1
+                # if i > 5: break
 
             flowing.discard((x,y))  # XXX
         elif m[x,y+1] in '#~':
@@ -68,14 +65,16 @@ def step(m, flowing, ymax):
             state = '~' if ledge and redge else '|'
             for i in range(lx, rx+1):
                 if state == '|' and m[i,y] != state:
-                    flowing.add((i,y))
+                    new_flowing.add((i,y))
                 else:
                     flowing.discard((i,y))
                     if m[(i,y-1)] == '|' and m[i,y] != state:
-                        flowing.add((i,y-1))  # XXX
+                        new_flowing.add((i,y-1))  # XXX
                 m[i,y] = state
 
+    flowing.update(new_flowing)
 
+    return max_seen
 
 def main(args):
     m = defaultdict(lambda: ' ')
@@ -89,34 +88,37 @@ def main(args):
             for x in range(b, c+1):
                 m[x,a] = '#'
     xs, ys = zip(*m.keys())
+    minx = min(xs)
+    maxx = max(xs)
     ymin = min(ys)
     ymax = max(ys)
 
     m[500,0] = '+'
     m[500,1] = '|'
 
-
+    max_seen = 0
     flowing = {k for k in m if m[k] == '|'}
 
+    tstart = time.time()
     i = 0
     while True:
         m2 = dict(m)
         # if i % 100 == 0:
         #     draw(m)
-        #trace(m)
-        step(m, flowing, ymax)
+        t0 = time.time()
+        # trace(m, minx, maxx, max_seen)
+        t1 = time.time()
+        max_seen = max(max_seen, step(m, flowing, ymax))
 
         #print(i, len(m), len(flowing))
 
         if m == m2:
-            # The flowing tracking is "approximate", so when we stop,
-            # find all the flowing squares and try again before
-            # calling it a day.
-            flowing = {k for k in m if m[k] == '|'}
-            step(m, flowing, ymax)
-            if m == m2:
-                break
+            break
+
         i += 1
+        t2 = time.time()
+        # time.sleep(0.04)
+        # print("draw: {:.3f} step: {:.3f} FPS: {:.1f}".format(t1 - t0, t2 - t1, i / (t2 - tstart)))
 
     draw(m)
 
