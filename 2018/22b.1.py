@@ -69,39 +69,22 @@ def go(depth, target):
     tx, ty = target
 
     start = (0, 0, TORCH)  # can't enter wet, because torch
-    cost = {}
-    # todo = deque([start])
+    cost = {start: 0}
     sitem = PrioritizedItem(h(target, *start), start)
+
     todo = [sitem]
     items = {start: sitem}
-    cost[start] = 0
-
 
     full_target = (*target, TORCH)
 
-    hits = 0
-    fails = 0
-    ta = tb = 0.0
-    while todo:
-        t0 = time.time()
-
+    while True:
         cur = heappop(todo).item
         if not cur:
-            fails += 1
             continue
-        hits += 1
-
-        # really this should be a PQ but oh well...
-        #cur = min(todo, key=lambda x: cost[x])
-        #todo.remove(cur)
-        t1 = time.time()
 
         if cur == full_target:
             break
-        t2 = time.time()
         for nbr, ncost in edges(target, depth, *cur):
-            assert nbr != cur, (nbr, cur)
-            #print("NBR", nbr, cost.get(nbr), cost[cur], ncost)
             tentative_cost = cost[cur] + ncost
             if nbr not in cost or cost[nbr] > tentative_cost:
                 item = PrioritizedItem(cost[cur] + h(target, *nbr), nbr)
@@ -111,15 +94,7 @@ def go(depth, target):
                 if nbr in items:
                     items[nbr].item = None
                 items[nbr] = item
-                #print(cost)
-        t3 = time.time()
-        # print("cur={}, cost={} min={:.3} nbrs={:.3} print={:.3} ratio={:.3} todo={}".format(
-        #     cur, cost[cur], t1 - t0, t3 - t2, tb - ta, (t1-t0)/(t3-t2), len(todo)))
-        tb = time.time()
-        ta = t3
 
-
-    print(cur, fails, hits)
     print(cost[cur])
 
 
