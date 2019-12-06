@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
-# does Dijkstra's basically
+# does A* basically (with some heap funniness). This lets us avoid the
+# "x < 100" heuristic that was needed to get acceptable performance
+# with Dijkstra's and the hinky BFS version.
 
 from collections import defaultdict, deque
 import sys
@@ -48,7 +50,7 @@ def edges(target, depth, x, y, gear):
             options += [((x, y, i), 7)]
 
     for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
-        if x+dx >= 0 and y+dy >= 0 and region(target, depth, x+dx, y+dy) != gear and x < 100:
+        if x+dx >= 0 and y+dy >= 0 and region(target, depth, x+dx, y+dy) != gear:
             options += [((x+dx, y+dy, gear), 1)]
 
     return options
@@ -59,6 +61,9 @@ class PrioritizedItem:
     priority: int
     item: object=field(compare=False)
 
+def h(target, x, y, gear):
+    return abs(target[0] - x) + abs(target[1] - y)
+
 
 def go(depth, target):
     tx, ty = target
@@ -66,7 +71,7 @@ def go(depth, target):
     start = (0, 0, TORCH)  # can't enter wet, because torch
     cost = {}
     # todo = deque([start])
-    sitem = PrioritizedItem(0, start)
+    sitem = PrioritizedItem(h(target, *start), start)
     todo = [sitem]
     items = {start: sitem}
     cost[start] = 0
@@ -97,11 +102,12 @@ def go(depth, target):
         for nbr, ncost in edges(target, depth, *cur):
             assert nbr != cur, (nbr, cur)
             #print("NBR", nbr, cost.get(nbr), cost[cur], ncost)
-            if nbr not in cost or cost[nbr] > cost[cur] + ncost:
-                item = PrioritizedItem(cost[cur] + ncost, nbr)
+            tentative_cost = cost[cur] + ncost
+            if nbr not in cost or cost[nbr] > tentative_cost:
+                item = PrioritizedItem(cost[cur] + h(target, *nbr), nbr)
 
                 heappush(todo, item)
-                cost[nbr] = item.priority
+                cost[nbr] = tentative_cost
                 if nbr in items:
                     items[nbr].item = None
                 items[nbr] = item
