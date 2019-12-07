@@ -71,28 +71,30 @@ def step_leaf(leaf: Node) -> Node:
     assert len(str) == 4
     return new_plants(str)
 
-def step_interior(node: Node, to_skip: int) -> Node:
-    """Step an interior node of level n, producing a node of level n-1"""
+def step_interior(node: Node, steps_power: int) -> Node:
+    """Step an interior node of level n, producing a node of level n-1.
+
+    Evaluate for up to 2**steps_power steps.
+    """
     assert node.level > 3
-    if (node, to_skip) in step_cache:
-        return step_cache[node, to_skip]
+    if (node, steps_power) in step_cache:
+        return step_cache[node, steps_power]
 
-    next = max(to_skip - 1, 0)
-    left = step(node.left, next)
-    right = step(node.right, next)
-    mid = step(new(node.left.right, node.right.left), next)
+    left = step(node.left, steps_power)
+    right = step(node.right, steps_power)
+    mid = step(new(node.left.right, node.right.left), steps_power)
 
-    if to_skip > 0:
+    if node.level - 2 > steps_power:
         val = new(
             new(left.right, mid.left),
             new(mid.right, right.left),
         )
     else:
         val = new(
-            step(new(left, mid), 0),
-            step(new(mid, right), 0),
+            step(new(left, mid), node.level),
+            step(new(mid, right), node.level),
         )
-    step_cache[node, to_skip] = val
+    step_cache[node, steps_power] = val
 
     return val
 
@@ -105,6 +107,7 @@ def step(node: Node, to_skip: int) -> Node:
     return res
 
 def empty(level: int) -> Node:
+    """Create an empty node at level"""
     if level == 1:
         return new_plants('..')
     else:
@@ -124,9 +127,11 @@ def try_shrink(node: Node) -> Node:
         return node
 
 def next_power_2(x: int) -> int:
+    """Return the smallest power of 2 greater than or equal to x"""
     return 1 << (x-1).bit_length()
 
-def largest_power_2(n: int) -> int:
+def last_power_2(n: int) -> int:
+    """Return the largest power of 2 less than or equal to x"""
     return 1 << (n.bit_length() - 1)
 
 def parse_input(data: List[str]) -> Tuple[Dict[str, str], str]:
@@ -139,6 +144,29 @@ def parse_input(data: List[str]) -> Tuple[Dict[str, str], str]:
 
     return update_rules, initial
 
+def run(state: Node, target: int) -> Node:
+    # Expand the node so that it can be immediately stepped as far as we need.
+    while (1 << (state.level - 3)) < target:
+        state = expand(state)
+
+    # Evaluate until we hit it!
+    steps = 0
+    while steps < target:
+        # step can only evaluate a power-of-two number of steps, so
+        # find the largest power of two less than our distance to go.
+        amount = last_power_2(target - steps)
+
+        print("stepping", amount)
+        steps += amount
+        state = step(expand(state), amount.bit_length())
+
+        print(
+            'steps={}, score={}, live={}, table size={}'.format(
+                steps, state.centered_score(), state.live, len(hashconser)
+            )
+        )
+
+    return state
 
 def main(args) -> None:
     target = 50_000_000_000
@@ -153,26 +181,7 @@ def main(args) -> None:
     state_0 = new_plants(initial)
     state = new(empty(state_0.level), state_0)
 
-    steps = 0
-    while steps < target:
-        state = expand(expand(state))
-        natural_amount = 1 << (state.level - 3)
-        if steps + natural_amount <= target:
-            print("stepping", natural_amount)
-            steps += natural_amount
-            state = step(state, 0)
-        else:
-            small_step = largest_power_2(target - steps)
-            print("under stepping", small_step)
-            steps += small_step
-            idx = state.level - 2 - small_step.bit_length()
-            state = step(state, idx)
-
-        print(
-            'steps={}, score={}, live={}, table size={}'.format(
-                steps, state.centered_score(), state.live, len(hashconser)
-            )
-        )
+    state = run(state, target)
 
     print(state.centered_score())
 
