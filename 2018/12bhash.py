@@ -9,7 +9,7 @@ from __future__ import annotations
 import sys
 
 from collections import defaultdict, deque
-from typing import Dict, Union, Tuple, Optional, Any
+from typing import Dict, List, Union, Tuple, Optional, Any
 from dataclasses import dataclass
 
 @dataclass(eq=False, frozen=True)
@@ -58,8 +58,9 @@ def new(left: Node, right: Node) -> Node:
         if left.level <= 2:
             plants = left.plants + right.plants
         score = left.score + right.score + (1 << left.level) * right.live
-        hashconser[key] = Node(left.level + 1, left, right, plants,
-                               left.live + right.live, score)
+        hashconser[key] = Node(
+            left.level + 1, left, right, plants, left.live + right.live, score
+        )
     return hashconser[key]
 
 def step_leaf(leaf: Node) -> Node:
@@ -84,12 +85,12 @@ def step_interior(node: Node, to_skip: int) -> Node:
     if to_skip > 0:
         val = new(
             new(left.right, mid.left),
-            new(mid.right, right.left)
+            new(mid.right, right.left),
         )
     else:
         val = new(
             step(new(left, mid), 0),
-            step(new(mid, right), 0)
+            step(new(mid, right), 0),
         )
     step_cache[node, to_skip] = val
 
@@ -111,35 +112,44 @@ def empty(level: int) -> Node:
         return new(x, x)
 
 def expand(node: Node) -> Node:
+    """Expand a node to be one level higher but have the same contents."""
     x = empty(node.level - 1)
     return new(new(x, node.left), new(node.right, x))
 
 def try_shrink(node: Node) -> Node:
+    """If possible, shrink a node to be one level lower but have the same contents."""
     if node.left.left.live == 0 and node.right.right.live == 0:
         return new(node.left.right, node.right.left)
     else:
         return node
 
-def next_power_2(x):
+def next_power_2(x: int) -> int:
     return 1 << (x-1).bit_length()
 
-def largest_power_2(n):
+def largest_power_2(n: int) -> int:
     return 1 << (n.bit_length() - 1)
 
-def main(args):
-    target = 50_000_000_000
-    if args[1:]:
-        target = int(args[1])
-
-    data = [s.strip() for s in sys.stdin]
-    stuff = [x.split(' ') for x in data[2:]]
-    stuff = dict([(x, z) for x, _, z in stuff])
-    update_rule.update(stuff)
+def parse_input(data: List[str]) -> Tuple[Dict[str, str], str]:
+    rule_parts = [x.split(' ') for x in data[2:]]
+    update_rules = dict([(x, z) for x, _, z in rule_parts])
 
     initial = data[0].split(" ")[2]
     size = max(next_power_2(len(initial)), 8)
     initial += '.' * (size - len(initial))
 
+    return update_rules, initial
+
+
+def main(args) -> None:
+    target = 50_000_000_000
+    if args[1:]:
+        target = int(args[1])
+
+    rules, initial = parse_input([s.strip() for s in sys.stdin])
+    update_rule.update(rules)
+
+    # The provided initial state starts at zero, but our node wants to
+    # be centered on zero, so put an empty node to the left.
     state_0 = new_plants(initial)
     state = new(empty(state_0.level), state_0)
 
@@ -158,10 +168,13 @@ def main(args):
             idx = state.level - 2 - small_step.bit_length()
             state = step(state, idx)
 
-        print('steps={}, score={}, live={}, table size={}'.format(
-            steps, state.centered_score(), state.live, len(hashconser)))
+        print(
+            'steps={}, score={}, live={}, table size={}'.format(
+                steps, state.centered_score(), state.live, len(hashconser)
+            )
+        )
 
     print(state.centered_score())
 
 if __name__ == '__main__':
-    sys.exit(main(sys.argv))
+    main(sys.argv)
