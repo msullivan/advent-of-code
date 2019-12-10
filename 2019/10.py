@@ -1,32 +1,17 @@
 #!/usr/bin/env python3
 
 import sys
-import re
 import time
 import math
-from fractions import Fraction
-
-
-def extract(s):
-    return [int(x) for x in re.findall(r'\d+', s)]
-
-
-def ordered(x, y, z):
-    return [x, y, z] == sorted([x, y, z]) or [x, y, z] == list(reversed(sorted([x, y, z])))
-
-
-def colinear(a, b, c):
-    x1, y1 = a
-    x2, y2 = b
-    x3, y3 = c
-    return (y2 - y1) * (x3 - x1) == (y3 - y1) * (x2 - x1) and ordered(x1, x2, x3) and ordered(y1, y2, y3)
 
 def distance(a, b):
-    x1, y1 = a
-    x2, y2 = b
+    (x1, y1), (x2, y2) = a, b
     return math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
 
-def norm(a):
+
+def angle(a, b):
+    (x1, y1), (x2, y2) = a, b
+    return -math.atan2(x2 - x1, y2 - y1)
     return distance(a, (0, 0))
 
 
@@ -38,36 +23,23 @@ def main(args):
             if c == "#":
                 nobes.add((x, y))
 
-    # print(nobes)
-    # print(len(nobes))
-
+    # My original solution used a brute force N^3 colinearity check
     seen = {}
     for c in nobes:
-        count = 0
-        for other in nobes:
-            if c == other: continue
-            if not any(colinear(c, x, other) for x in nobes - {c, other}):
-                count += 1
-        seen[c] = count
+        seen[c] = len({angle(c, d) for d in nobes - {c}})
 
-    m = max(seen.values())
+    m, best = max((v, k) for k, v in seen.items())
     print(m)
-    best = next(k for k, v in seen.items() if m == v)
-
-    # best = (22, 19)
-
-    xb, yb = best
 
     def key(a):
-        x, y = a
-        return (-math.atan2(x - xb, y - yb), distance(a, best))
+        return (angle(best, a), distance(best, a))
 
     last = (1, 0)
     num = 0
     dead = set()
     while True:
         for target in sorted(nobes - {best}, key=key):
-            if target not in dead and not colinear(best, last, target):
+            if target not in dead and not key(last)[0] == key(target)[0]:
                 dead.add(target)
                 last = target
                 # print("Shooting", target, len(dead))
@@ -78,4 +50,4 @@ def main(args):
 
 
 if __name__ == '__main__':
-    sys.exit(main(sys.argv))
+    main(sys.argv)
