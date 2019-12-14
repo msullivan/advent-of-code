@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
-import re
 import time
-import itertools
-import copy
 from collections import defaultdict
 
 class IntCode:
@@ -105,11 +102,12 @@ def draw(painted):
     miny = min(y for x, y in painted)
     maxx = max(x for x, y in painted)
     maxy = max(y for x, y in painted)
+    l = ""
     for y in range(miny, maxy+1):
-        l = ""
         for x in range(minx, maxx+1):
             l += painted[x,y]
-        print(l)
+        l += "\n"
+    print(l)
 
 
 def go(interp, input):
@@ -144,54 +142,30 @@ def main(args):
     step = 0
 
     board.update(go(interp, [])[0])
-    draw(board)
 
     last = interp.program.copy()
-    lol = None
     while not interp.done:
-        new_board, _ = go(copy.deepcopy(interp), [0])
-        aboard = board.copy()
-        aboard.update(new_board)
-        next_ball_coord, next_paddle_coord = get_stuff(aboard)
-
         ball_coord, paddle_coord = get_stuff(board)
 
-        press = next_ball_coord[0] - next_paddle_coord[0]
-        if ball_coord[1] + 1 == paddle_coord[1] and ball_coord[0] == paddle_coord[0]:
-            press = 0
+        press = ball_coord[0] - paddle_coord[0]
         if press:
             press = press // abs(press)
-
-
-        # ball_coord, paddle_coord = get_stuff(board)
-
-        print("Ball:", ball_coord)
-        print("Paddle:", paddle_coord)
-        print("Press:", press)
-
-# #        print("HACKS:", [k for k, v in board.items() if v == last[k]])
-#         hack = {k for k, v in interp.program.items() if v == paddle_coord[0]}
-#         print("HACKS:", hack)
-#         if lol is not None:
-#             lol &= hack
-#         else:
-#             lol = hack
-#         print("LOL:", lol)
 
         # print("Move: ", end='')
         # sys.stdout.flush()
         # move = sys.stdin.readline().strip()
         # press = 1 if move == "d" else -1 if move == "a" else 0
 
-        #interp.program[392] = ball_coord[0]
-        #press = 0
         real_new_board, score = go(interp, [press])
         board.update(real_new_board)
 
-        print("====================", step)
-        draw(board)
-        if score is not None:
-            print("Score:", score)
+        # print("\x1b[2J")
+        # print("====================", step)
+        # print("Ball:", ball_coord)
+        # print("Paddle:", paddle_coord)
+        # print("Press:", press)
+        # print("Score:", score)
+        # draw(board)
 
         press = 0
         step += 1
