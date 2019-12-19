@@ -33,8 +33,7 @@ def add(v1, v2):
 
 def main(args):
     data = [s.strip() for s in sys.stdin]
-    lp = [int(x) for x in data[0].split(",")]
-    p = defaultdict(int, [(i, x) for i, x in enumerate(lp)])
+    p = [int(x) for x in data[0].split(",")]
     board = defaultdict(lambda: " ")
 
     # Part 1

@@ -1,3 +1,5 @@
+import array
+
 def execute_intcode(p, ip, relative_base, input, output):
     while ip >= 0:
         instr = p[ip]
@@ -5,19 +7,25 @@ def execute_intcode(p, ip, relative_base, input, output):
         def read(i):
             mode = (instr // (10**(1+i))) % 10
             if mode == 0:
-                return p[p[ip+i]]
+                addr = p[ip+i]
             elif mode == 1:
-                return p[ip+i]
+                addr = ip+i
             else:
-                return p[p[ip+i] + relative_base]
+                addr = p[ip+i] + relative_base
+            if addr >= len(p):
+                p.extend([0]*addr)
+            return p[addr]
 
         def write(i, v):
             mode = (instr // (10**(1+i))) % 10
             if mode == 0:
-                p[p[ip+i]] = v
+                addr = p[ip+i]
             else:
                 assert mode == 2
-                p[p[ip+i] + relative_base] = v
+                addr = p[ip+i] + relative_base
+            if addr >= len(p):
+                p.extend([0]*addr)
+            p[addr] = v
 
         if instr % 100 == 1:
             write(3, read(1) + read(2))
@@ -66,7 +74,8 @@ def execute_intcode(p, ip, relative_base, input, output):
 
 class IntCode:
     def __init__(self, program, input = None, output = None):
-        self.program = program.copy()
+        self.program = array.array('q', program)
+
         self.ip = 0
         self.relative_base = 0
         self.input = input or []
