@@ -15,8 +15,10 @@ typedef struct arrayobject {
 
 static int grow_array(PyObject *array, int amount, ssize_t *psize, int64_t **pmem)
 {
+    ssize_t start = Py_SIZE(array);
+    amount = amount * 8 / 7;
     // this could be a lot better but I expect it won't come up that much
-    for (int i = 0; i < amount; i++) {
+    for (int i = start; i < amount; i++) {
         PyObject *res = PyObject_CallMethod(array, "append", "i", 0);
         if (!res) return -1;
         Py_DECREF(res);
