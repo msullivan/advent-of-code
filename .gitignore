@@ -6,3 +6,4 @@
 *.hi
 .mypy_cache
 *.pyc
+*.so

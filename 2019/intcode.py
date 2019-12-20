@@ -72,6 +72,12 @@ def execute_intcode(p, ip, relative_base, input, output):
     return ip, relative_base
 
 
+try:
+    from _intcode import execute_intcode
+except ImportError as e:
+    pass
+
+
 class IntCode:
     def __init__(self, program, input = None, output = None):
         self.program = array.array('q', program)
