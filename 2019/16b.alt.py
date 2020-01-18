@@ -63,7 +63,7 @@ def main(args):
 
     offset = int(''.join(str(x) for x in data[:7]))
 
-    for i in range(100):
+    for i in range(10):
         print(i, display(data, 0), display(data, offset))
         data = fft(data)
 

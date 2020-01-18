@@ -7,41 +7,51 @@
 #define MAX_INPUT 1000
 #define MAX_BUF (MAX_INPUT*SCALE)
 
-#define ITERS 100
+#define ITERS 10
 
 
 #define min(x, y) ((x) < (y) ? (x) : (y))
 
-uint8_t go(int n, uint64_t *partials, int end) {
+uint8_t go(int n, int *partials, int end) {
     int step = n * 2;
     int mode = 1;
 
     int lo = n - 1;
     int hi = lo + n;
+    int rhi = hi + n;
 
     int res = 0;
+    int res2 = 0;
 
-    while (hi < end) {
+    while (rhi < end) {
         int val = partials[hi] - partials[lo];
-        res += mode * val;
-        mode = -mode;
+        int val2 = partials[rhi] - partials[hi];
+        //res += mode * val;
+        res += val;
+        res2 -= val2;
+//        res += mode == 1 ? val : -val;
+        //mode = -mode;
         lo += step;
-        hi = lo + n;
+        hi += step;
+        rhi += step;
     }
+    res += res2;
 
-    if (lo < end) {
+    while (lo < end) {
         hi = min(lo + n, end);
         res += mode * (partials[hi] - partials[lo]);
+        mode = -mode;
+        lo += step;
     }
 
     return abs(res) % 10;
 }
 
-int64_t partials[MAX_BUF+1];
+int partials[MAX_BUF+1];
 void fft(uint8_t *signal, int len) {
     partials[0] = 0;
 
-    int64_t sum = 0;
+    int sum = 0;
     for (int i = 0; i < len; i++) {
         sum += signal[i];
         partials[i+1] = sum;
@@ -57,7 +67,6 @@ void print(uint8_t *signal, int offset, int n) {
     for (int i = 0; i < n; i++) {
         putchar('0' + signal[offset+i]);
     }
-    putchar('\n');
 }
 
 uint8_t signal[MAX_BUF];
@@ -79,12 +88,16 @@ int main(int *argc, char **argv) {
     printf("offset: %d\n", offset);
 
     for (int i = 0; i < ITERS; i++) {
-        printf("iter %d ", i);
+        printf("%d ", i);
+        print(signal, 0, 8);
+        printf(" ");
         print(signal, offset, 8);
+        printf("\n");
         fft(signal, len*SCALE);
     }
 
     print(signal, offset, 8);
+    printf("\n");
 
     return 0;
 }
