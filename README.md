@@ -2,8 +2,9 @@
 My hacky advent of code solutions. Generally not good code.
 
 Many of these were originally written very fast, to try to make the
-leaderboard. I'm somewhat surprised that I've wound up instinctively
-reaching for Haskell so often.
+leaderboard. In the early years, I was somewhat surprised that I wound
+up instinctively reaching for Haskell so often. These days my Haskell
+has grown rusty, so it seems to be always Python now.
 
 I'm somewhat inconsistent about whether the files here represent the
 very first original code that I wrote to solve the problem, or
