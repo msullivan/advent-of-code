@@ -1,25 +1,41 @@
 #!/usr/bin/env python3
 
-# This does an honest computation of the Flawed Frequency Transmission
-# that doesn't rely on the offset being large. It computes all of the digits
-# of the FFT.
-# On my laptop it ran in two minutes using pypy.
+"""
+This does an honest computation of the Flawed Frequency Transmission
+that doesn't rely on the offset being large. It computes all of the
+digits of the FFT.  On my laptop it ran in two minutes using pypy.
+
+The trick is that we compute a partial sums array,
+where partials[0] = 0 and partials[i+1] = l[0]+...+l[i-1].
+
+We can then quickly compute the sum l[i]+...+l[j]
+as partials[j+1] - partials[i].
+
+Then, for each output element `i`, for each run of `i` 1s or -1s in the
+pattern, we can compute the sum of the corresponding input elements in
+constant time, multiply it by 1 or -1, and add it to our running sum.
+
+This means that computing output element `i` takes O(N/i) time.
+Since I am told that 1/1 + 1/2 + 1/3 + ... + 1/N is O(lg N)
+(https://en.wikipedia.org/wiki/Harmonic_number),
+this FFT runs in O(N lg N) time.
+"""
 
 from __future__ import print_function
 
 import sys
 import time
 
-def go(n, partials):
+def go(i, partials):
     """Compute one element value from the FFT.
 
     It is kind of uglified for performance."""
-    step = 2 * n
+    step = 2 * i
     end = len(partials) - 1
 
     mode = 1
-    lo = -1 + n
-    hi = lo + n
+    lo = -1 + i
+    hi = lo + i
 
     res = 0
 
@@ -30,10 +46,10 @@ def go(n, partials):
         res += mode * (partials[hi] - partials[lo])
         mode = -mode
         lo += step
-        hi = lo + n
+        hi = lo + i
 
     if lo < end:
-        hi = min(lo + n, end)
+        hi = min(lo + i, end)
         res += mode * (partials[hi] - partials[lo])
 
     return abs(res) % 10
@@ -63,10 +79,11 @@ def main(args):
 
     offset = int(''.join(str(x) for x in data[:7]))
 
-    for i in range(10):
+    for i in range(100):
         print(i, display(data, 0), display(data, offset))
         data = fft(data)
 
+    print(i, display(data, 0), display(data, offset))
     print(display(data, offset))
 
 
