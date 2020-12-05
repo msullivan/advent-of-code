@@ -1,22 +1,17 @@
 #!/usr/bin/env python3
 
-# I was pretty sure that the code was just straightforward binray but
+# I was pretty sure that the code was just straightforward binary but
 # also I was tired and not firing on all cylinders so I figured I'd
 # just mindlessly type out the directions and hope that would be fast
 # enough. It almost was: 103 on **. Sigh. Should have just used my
 # brain.
 
 import sys
-import re
-
-def extract(s):
-    return [int(x) for x in re.findall(r'-?\d+', s)]
-
 
 def main(args):
     data = [s.strip() for s in sys.stdin]
 
-    ass = 0
+    maxseen = 0
     seen = set()
     for row in data:
         lo, hi = 0, 128
@@ -37,13 +32,12 @@ def main(args):
                 lo = mid
 
         seat = lo
-        print(rown, seat)
         id = rown*8+seat
-        ass = max(ass, id)
+        maxseen = max(maxseen, id)
         seen.add(id)
 
-    print(ass)
-    for x in range(ass):
+    print(maxseen)
+    for x in range(maxseen):
         if x not in seen and x+1 in seen and x-1 in seen:
             print(x)
 

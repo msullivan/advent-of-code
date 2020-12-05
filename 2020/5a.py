@@ -1,16 +1,11 @@
 #!/usr/bin/env python3
 
 import sys
-import re
-
-def extract(s):
-    return [int(x) for x in re.findall(r'-?\d+', s)]
-
 
 def main(args):
     data = [s.strip() for s in sys.stdin]
 
-    ass = 0
+    maxseen = 0
     seen = set()
     for row in data:
         lo, hi = 0, 128
@@ -31,12 +26,11 @@ def main(args):
                 lo = mid
 
         seat = lo
-        print(rown, seat)
         id = rown*8+seat
-        ass = max(ass, id)
+        maxseen = max(maxseen, id)
         seen.add(id)
 
-    print(ass)
+    print(maxseen)
 
 
     # print(data)
