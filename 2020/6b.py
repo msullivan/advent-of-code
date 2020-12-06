@@ -8,19 +8,7 @@ def extract(s):
 
 
 def main(args):
-    data = [s.strip() for s in sys.stdin]
-    data.append('')
-
-    crap = []
-    cur = []
-    for x in data:
-        if not x:
-            crap.append(list(cur))
-            cur = []
-        else:
-            cur.extend(x.split(" "))
-
-    data = crap
+    data = [x.split('\n') for x in sys.stdin.read().split('\n\n')]
 
     total = 0
     letters = "abcdefghijklmnopqrstuvwxyz"
