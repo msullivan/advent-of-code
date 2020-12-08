@@ -9,6 +9,7 @@ def extract(s):
 
 def main(args):
     data = [x.split('\n') for x in sys.stdin.read().split('\n\n')]
+    # data = [s.strip() for s in sys.stdin]
 
     total = 0
     letters = "abcdefghijklmnopqrstuvwxyz"
