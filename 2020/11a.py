@@ -39,7 +39,7 @@ def main(args):
     data = [list(s) for s in data]
 
     while True:
-        pp(data)
+        # pp(data)
         ndata = step(data)
         if ndata == data:
             break

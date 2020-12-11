@@ -13,25 +13,30 @@ def first(grid, x, y, dx, dy):
             return grid[y][x]
 
 def step(grid):
-    ngrid = copy.deepcopy(grid)
+    #ngrid = copy.deepcopy(grid)
+    ngrid = [x[:] for x in grid]
+    change = False
     for y in range(len(grid)):
         for x in range(len(grid[0])):
             cnt = 0
             for i in range(-1,2):
                 for j in range(-1,2):
-                    if (i, j) == (0, 0): continue
+                    if i == j == 0: continue
                     # if x+i < 0 or x+i >= len(grid[0]) or y+j < 0 or y+j >= len(grid):
                     #     continue
                     tgt = first(grid, x, y, i, j)
                     if tgt == '#':
                         cnt += 1
 
-            if grid[y][x] == 'L' and cnt == 0:
-                ngrid[y][x] = '#'
-            if grid[y][x] == '#' and cnt >= 5:
+            if grid[y][x] == 'L':
+                if cnt == 0:
+                    ngrid[y][x] = '#'
+                    change = True
+            elif grid[y][x] == '#' and cnt >= 5:
                 ngrid[y][x] = 'L'
+                change = True
 
-    return ngrid
+    return ngrid, change
 
 def pp(grid):
     print("\n".join("".join(x) for x in grid))
@@ -41,12 +46,17 @@ def main(args):
     data = [s.strip() for s in sys.stdin]
     data = [list(s) for s in data]
 
+    print(len(data), len(data[0]))
+    iters = 0
     while True:
-        pp(data)
-        ndata = step(data)
-        if ndata == data:
+        iters += 1
+        # pp(data)
+        ndata, change = step(data)
+        if not change:
             break
         data = ndata
+
+    print("iters", iters)
 
     cnt = 0
     for r in data:
