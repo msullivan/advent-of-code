@@ -27,6 +27,7 @@ class Node:
     true: Node
 
     @classmethod
+    @lru_cache(maxsize=None)
     def new(cls, var: int, false: Node, true: Node) -> Node:
         if false is true:
             return false
@@ -73,7 +74,8 @@ def negate_bdd(bdd: Node) -> Node:
 
 
 def and_bdds(lhs: Node, rhs: Node) -> Node:
-    mk = lru_cache(maxsize=None)(Node.new)
+    # mk = lru_cache(maxsize=None)(Node.new)
+    mk = Node.new
 
     @lru_cache(maxsize=None)
     def band(lhs: Node, rhs: Node) -> Node:
@@ -97,18 +99,33 @@ def and_bdds(lhs: Node, rhs: Node) -> Node:
 
 
 def or_bdds(lhs: Node, rhs: Node) -> Node:
-    # ... minus one point for each additional law
-    return negate_bdd(and_bdds(negate_bdd(lhs), negate_bdd(rhs)))
+    # mk = lru_cache(maxsize=None)(Node.new)
+    mk = Node.new
+
+    @lru_cache(maxsize=None)
+    def bor(lhs: Node, rhs: Node) -> Node:
+        if lhs is TrueLeaf or rhs is TrueLeaf:
+            return TrueLeaf
+        elif lhs is FalseLeaf and rhs is FalseLeaf:
+            return FalseLeaf
+        elif lhs.var == rhs.var:
+            return mk(lhs.var,
+                      false=bor(lhs.false, rhs.false),
+                      true=bor(lhs.true, rhs.true))
+        elif lhs.var < rhs.var:
+            return mk(lhs.var,
+                      false=bor(lhs.false, rhs),
+                      true=bor(lhs.true, rhs))
+        else:
+            return mk(rhs.var,
+                      false=bor(lhs, rhs.false),
+                      true=bor(lhs, rhs.true))
+    return bor(lhs, rhs)
 
 
-def eval_bdd(nobe: Node, bits: int) -> bool:
-    if isinstance(nobe, LeafNode):
-        return nobe.val
-
-    if bits & (1 << nobe.var):
-        return eval_bdd(nobe.true, bits)
-    else:
-        return eval_bdd(nobe.false, bits)
+# def or_bdds(lhs: Node, rhs: Node) -> Node:
+#     # ... minus one point for each additional law
+#     return negate_bdd(and_bdds(negate_bdd(lhs), negate_bdd(rhs)))
 
 
 def count_bdd(bdd: Node, nbits: int) -> Node:
@@ -128,6 +145,18 @@ def count_bdd(bdd: Node, nbits: int) -> Node:
     return count(bdd) * (1 << gvar(bdd))
 
 
+# eval and enum aren't actually used in the solution but I used them
+# for testing and also they are cool
+def eval_bdd(nobe: Node, bits: int) -> bool:
+    if isinstance(nobe, LeafNode):
+        return nobe.val
+
+    if bits & (1 << nobe.var):
+        return eval_bdd(nobe.true, bits)
+    else:
+        return eval_bdd(nobe.false, bits)
+
+
 def enum_bdd(bdd: Node, nbits: int) -> Node:
     def gvar(bdd: Node) -> int:
         return nbits if isinstance(bdd, LeafNode) else bdd.var
@@ -138,13 +167,11 @@ def enum_bdd(bdd: Node, nbits: int) -> Node:
 
         if i < gvar(bdd):
             for v in enum(bdd, i + 1):
-                # print("double yield", i, gvar(bdd))
                 yield v
                 yield v | (1 << i)
         else:
             if isinstance(bdd, LeafNode):
                 if bdd.val:
-                    # print("yielding", i)
                     yield 0
             else:
                 for v in enum(bdd.false, i + 1):
@@ -153,6 +180,24 @@ def enum_bdd(bdd: Node, nbits: int) -> Node:
                     yield v | (1 << i)
 
     return enum(bdd, 0)
+
+
+def bdd_nodes(bdd: Node) -> Set[Node]:
+    nobes = set()
+    def find(node: Node) -> None:
+        if node in nobes:
+            return
+        nobes.add(node)
+        if not isinstance(node, LeafNode):
+            find(node.true)
+            find(node.false)
+
+    find(bdd)
+    return nobes
+
+
+def bdd_size(bdd: Node) -> int:
+    return len(bdd_nodes(bdd))
 
 
 def main(args):
@@ -176,36 +221,25 @@ def main(args):
 
     # nbits = 8  # hack!
 
-    print(writes)
-    print(nbits)
-    bdd = addr_mask_to_bdd(writes[0][0], nbits)
-    bdd2 = addr_mask_to_bdd(writes[1][0], nbits)
-    print(bdd)
-    # bdd1_vals = {i for i in range(1 << nbits) if eval_bdd(bdd, i)}
-    # print(bdd1_vals)
-    nbdd = negate_bdd(bdd)
-    # print([i for i in range(1 << nbits) if eval_bdd(nbdd, i)])
+    bdds = [addr_mask_to_bdd(mask, nbits) for mask, _ in writes]
 
-    # bdd2_vals = {i for i in range(1 << nbits) if eval_bdd(bdd2, i)}
-    # print(bdd2_vals)
-    # print(bdd1_vals & bdd2_vals)
+    # run backwards through the list and progressively union them all up
+    union_bdds = []
+    cur_union: Node = FalseLeaf
+    for i, bdd in enumerate(reversed(bdds)):
+        union_bdds.append(cur_union)
+        cur_union = or_bdds(cur_union, bdd)
+        print("sizes", i, bdd_size(bdd)) #, bdd_size(cur_union))
+    union_bdds.reverse()
 
-    andbdd = and_bdds(bdd, bdd2)
-    # print(andbdd)
-    # andbdd_vals = {i for i in range(1 << nbits) if eval_bdd(andbdd, i)}
-    # print("brute forced", andbdd_vals)
-    # print(len(andbdd_vals))
-    # for x in enum_bdd(andbdd, nbits):
-    #     print("got one", x)
+    count = 0
+    for (_, val), bdd, rest_union in zip(writes, bdds, union_bdds):
+        andn_bdd = and_bdds(bdd, negate_bdd(rest_union))
+        size = count_bdd(andn_bdd, nbits)
+        print("BDD count!", size)
+        count += val * size
 
-
-    argh = list(enum_bdd(andbdd, nbits))
-    andbdd_vals2 = set(enum_bdd(andbdd, nbits))
-    print("enumed", andbdd_vals2)
-    print("argh", sorted(argh))
-
-
-    print(count_bdd(andbdd, nbits))
+    print(count)
 
 
 
