@@ -224,20 +224,15 @@ def main(args):
     bdds = [addr_mask_to_bdd(mask, nbits) for mask, _ in writes]
 
     # run backwards through the list and progressively union them all up
-    union_bdds = []
-    cur_union: Node = FalseLeaf
-    for i, bdd in enumerate(reversed(bdds)):
-        union_bdds.append(cur_union)
-        cur_union = or_bdds(cur_union, bdd)
-        print("sizes", i, bdd_size(bdd)) #, bdd_size(cur_union))
-    union_bdds.reverse()
-
     count = 0
-    for (_, val), bdd, rest_union in zip(writes, bdds, union_bdds):
-        andn_bdd = and_bdds(bdd, negate_bdd(rest_union))
+    cur_union: Node = FalseLeaf
+    for i, ((_, val), bdd) in enumerate(zip(writes, reversed(bdds))):
+        andn_bdd = and_bdds(bdd, negate_bdd(cur_union))
         size = count_bdd(andn_bdd, nbits)
-        print("BDD count!", size)
         count += val * size
+
+        cur_union = or_bdds(cur_union, bdd)
+        print("sizes", i, size, bdd_size(bdd)) #, bdd_size(cur_union))
 
     print(count)
 
