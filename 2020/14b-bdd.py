@@ -3,6 +3,10 @@
 """
 Implementation of day 14 part 2 using Binary Decision Diagrams.
 
+BDDs are an (often!) efficient representation of boolean functions---or,
+equivalently, of sets of N-bit numbers (where a number x is a member of
+the set if f(x) = 1).
+
 BDDs are actually super sweet! I really enjoyed learning about them for this.
 
 Capable of solving harder inputs with lots of Xs, like the part 1 example,
@@ -20,7 +24,7 @@ TODO: Real documentation
 
 from __future__ import annotations
 
-from typing import *
+from typing import Tuple, Callable, Set, Iterator, TypeVar
 
 from dataclasses import dataclass
 from functools import lru_cache
