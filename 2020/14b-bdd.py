@@ -34,6 +34,7 @@ class LeafNode(Node):
     def __repr__(self) -> str:
         return f'<{self.val}>'
 
+
 TrueLeaf = LeafNode(True)
 FalseLeaf = LeafNode(False)
 
@@ -53,66 +54,55 @@ def addr_mask_to_bdd(addr: Tuple[int, int], nbits: int) -> Node:
     return node
 
 
+@lru_cache(maxsize=None)
 def negate_bdd(bdd: Node) -> Node:
-    @lru_cache(maxsize=None)
-    def neg(bdd: Node) -> Node:
-        if bdd is TrueLeaf:
-            return FalseLeaf
-        elif bdd is FalseLeaf:
-            return TrueLeaf
-        else:
-            return Node.new(bdd.var, false=neg(bdd.false), true=neg(bdd.true))
-    return neg(bdd)
+    if bdd is TrueLeaf:
+        return FalseLeaf
+    elif bdd is FalseLeaf:
+        return TrueLeaf
+    else:
+        return Node.new(
+            bdd.var, false=negate_bdd(bdd.false), true=negate_bdd(bdd.true))
 
 
+@lru_cache(maxsize=None)
 def and_bdds(lhs: Node, rhs: Node) -> Node:
-    # mk = lru_cache(maxsize=None)(Node.new)
-    mk = Node.new
-
-    @lru_cache(maxsize=None)
-    def band(lhs: Node, rhs: Node) -> Node:
-        if lhs is TrueLeaf and rhs is TrueLeaf:
-            return TrueLeaf
-        elif lhs is FalseLeaf or rhs is FalseLeaf:
-            return FalseLeaf
-        elif lhs.var == rhs.var:
-            return mk(lhs.var,
-                      false=band(lhs.false, rhs.false),
-                      true=band(lhs.true, rhs.true))
-        elif lhs.var < rhs.var:
-            return mk(lhs.var,
-                      false=band(lhs.false, rhs),
-                      true=band(lhs.true, rhs))
-        else:
-            return mk(rhs.var,
-                      false=band(lhs, rhs.false),
-                      true=band(lhs, rhs.true))
-    return band(lhs, rhs)
+    if lhs is TrueLeaf and rhs is TrueLeaf:
+        return TrueLeaf
+    elif lhs is FalseLeaf or rhs is FalseLeaf:
+        return FalseLeaf
+    elif lhs.var == rhs.var:
+        return Node.new(lhs.var,
+                        false=and_bdds(lhs.false, rhs.false),
+                        true=and_bdds(lhs.true, rhs.true))
+    elif lhs.var < rhs.var:
+        return Node.new(lhs.var,
+                        false=and_bdds(lhs.false, rhs),
+                        true=and_bdds(lhs.true, rhs))
+    else:
+        return Node.new(rhs.var,
+                        false=and_bdds(lhs, rhs.false),
+                        true=and_bdds(lhs, rhs.true))
 
 
+@lru_cache(maxsize=None)
 def or_bdds(lhs: Node, rhs: Node) -> Node:
-    # mk = lru_cache(maxsize=None)(Node.new)
-    mk = Node.new
-
-    @lru_cache(maxsize=None)
-    def bor(lhs: Node, rhs: Node) -> Node:
-        if lhs is TrueLeaf or rhs is TrueLeaf:
-            return TrueLeaf
-        elif lhs is FalseLeaf and rhs is FalseLeaf:
-            return FalseLeaf
-        elif lhs.var == rhs.var:
-            return mk(lhs.var,
-                      false=bor(lhs.false, rhs.false),
-                      true=bor(lhs.true, rhs.true))
-        elif lhs.var < rhs.var:
-            return mk(lhs.var,
-                      false=bor(lhs.false, rhs),
-                      true=bor(lhs.true, rhs))
-        else:
-            return mk(rhs.var,
-                      false=bor(lhs, rhs.false),
-                      true=bor(lhs, rhs.true))
-    return bor(lhs, rhs)
+    if lhs is TrueLeaf or rhs is TrueLeaf:
+        return TrueLeaf
+    elif lhs is FalseLeaf and rhs is FalseLeaf:
+        return FalseLeaf
+    elif lhs.var == rhs.var:
+        return Node.new(lhs.var,
+                        false=or_bdds(lhs.false, rhs.false),
+                        true=or_bdds(lhs.true, rhs.true))
+    elif lhs.var < rhs.var:
+        return Node.new(lhs.var,
+                        false=or_bdds(lhs.false, rhs),
+                        true=or_bdds(lhs.true, rhs))
+    else:
+        return Node.new(rhs.var,
+                        false=or_bdds(lhs, rhs.false),
+                        true=or_bdds(lhs, rhs.true))
 
 
 # def or_bdds(lhs: Node, rhs: Node) -> Node:
