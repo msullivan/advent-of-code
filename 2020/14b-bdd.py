@@ -208,7 +208,7 @@ def main(args):
     # run backwards through the list and progressively union them all up
     count = 0
     cur_union: Node = FalseLeaf
-    for i, ((_, val), bdd) in enumerate(zip(writes, reversed(bdds))):
+    for i, ((_, val), bdd) in enumerate(zip(reversed(writes), reversed(bdds))):
         andn_bdd = and_bdds(bdd, negate_bdd(cur_union))
         size = count_bdd(andn_bdd, nbits)
         count += val * size
