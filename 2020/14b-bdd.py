@@ -3,14 +3,17 @@
 """
 Implementation of day 14 part 2 using Binary Decision Diagrams.
 
+BDDs are actually super sweet! I really enjoyed learning about them for this.
+
 Capable of solving harder inputs with lots of Xs, like the part 1 example,
 or the inputs from https://www.reddit.com/r/adventofcode/comments/kcybyr/2002_day_14_part_2_but_what_if_the_input_is_harder/.
 
 (I skimmed the first few pages of the Knuth section describing them
 and then put it away and figured out these versions of the
 construction algorithms myself---though they aren't that hard, once
-you have the data structure designed. I did read Knuth's algorithm for
-counting.)
+you have the data structure designed. I did read Knuth's Algorithm C for
+counting. Knuth's algorithms seem to be mostly iterative and bottom up,
+while my implementations are aggressively recursive and memoized.)
 
 TODO: Real documentation
 """
@@ -24,8 +27,17 @@ from functools import lru_cache
 import sys
 import re
 
+
+T = TypeVar('T')
+
+def memoize(x: T) -> T:
+    """lru_cache wrapper to pass maxsize and give the right type"""
+    return lru_cache(maxsize=None)(x)  # type: ignore
+
+
 def extract(s):
     return [int(x) for x in re.findall(r'-?\d+', s)]
+
 
 @dataclass(eq=False, frozen=True)
 class Node:
@@ -34,7 +46,7 @@ class Node:
     true: Node
 
     @classmethod
-    @lru_cache(maxsize=None)
+    @memoize
     def new(cls, var: int, false: Node, true: Node) -> Node:
         if false is true:
             return false
@@ -68,8 +80,8 @@ def addr_mask_to_bdd(addr: Tuple[int, int], nbits: int) -> Node:
 
     return node
 
-# negate and and aren't actually used anymore, but were in early versions
-@lru_cache(maxsize=None)
+# not actually used anymore (because I implemented andn directly)
+@memoize
 def negate_bdd(bdd: Node) -> Node:
     if bdd is TrueLeaf:
         return FalseLeaf
@@ -80,64 +92,54 @@ def negate_bdd(bdd: Node) -> Node:
             bdd.var, false=negate_bdd(bdd.false), true=negate_bdd(bdd.true))
 
 
-@lru_cache(maxsize=None)
+def merge_bdds(lhs: Node, rhs: Node, f: Callable[[Node, Node], Node]) -> Node:
+    """Handle the non-base-case portion of common binary ops"""
+    # If both nodes have the same variable, recurse on both of them
+    if lhs.var == rhs.var:
+        return Node.new(lhs.var,
+                        false=f(lhs.false, rhs.false),
+                        true=f(lhs.true, rhs.true))
+    # If one variable is earlier than the other, only recurse on the
+    # subtrees of the earlier node.
+    elif lhs.var < rhs.var:
+        return Node.new(lhs.var,
+                        false=f(lhs.false, rhs),
+                        true=f(lhs.true, rhs))
+    else:
+        return Node.new(rhs.var,
+                        false=f(lhs, rhs.false),
+                        true=f(lhs, rhs.true))
+
+
+# not actually used anymore (because I implemented andn directly)
+@memoize
 def and_bdds(lhs: Node, rhs: Node) -> Node:
     if lhs is TrueLeaf and rhs is TrueLeaf:
         return TrueLeaf
     elif lhs is FalseLeaf or rhs is FalseLeaf:
         return FalseLeaf
-    elif lhs.var == rhs.var:
-        return Node.new(lhs.var,
-                        false=and_bdds(lhs.false, rhs.false),
-                        true=and_bdds(lhs.true, rhs.true))
-    elif lhs.var < rhs.var:
-        return Node.new(lhs.var,
-                        false=and_bdds(lhs.false, rhs),
-                        true=and_bdds(lhs.true, rhs))
     else:
-        return Node.new(rhs.var,
-                        false=and_bdds(lhs, rhs.false),
-                        true=and_bdds(lhs, rhs.true))
+        return merge_bdds(lhs, rhs, and_bdds)
 
 
-@lru_cache(maxsize=None)
+@memoize
 def andn_bdds(lhs: Node, rhs: Node) -> Node:
     if lhs is TrueLeaf and rhs is FalseLeaf:
         return TrueLeaf
     elif lhs is FalseLeaf or rhs is TrueLeaf:
         return FalseLeaf
-    elif lhs.var == rhs.var:
-        return Node.new(lhs.var,
-                        false=andn_bdds(lhs.false, rhs.false),
-                        true=andn_bdds(lhs.true, rhs.true))
-    elif lhs.var < rhs.var:
-        return Node.new(lhs.var,
-                        false=andn_bdds(lhs.false, rhs),
-                        true=andn_bdds(lhs.true, rhs))
     else:
-        return Node.new(rhs.var,
-                        false=andn_bdds(lhs, rhs.false),
-                        true=andn_bdds(lhs, rhs.true))
+        return merge_bdds(lhs, rhs, andn_bdds)
 
 
-@lru_cache(maxsize=None)
+@memoize
 def or_bdds(lhs: Node, rhs: Node) -> Node:
     if lhs is TrueLeaf or rhs is TrueLeaf:
         return TrueLeaf
     elif lhs is FalseLeaf and rhs is FalseLeaf:
         return FalseLeaf
-    elif lhs.var == rhs.var:
-        return Node.new(lhs.var,
-                        false=or_bdds(lhs.false, rhs.false),
-                        true=or_bdds(lhs.true, rhs.true))
-    elif lhs.var < rhs.var:
-        return Node.new(lhs.var,
-                        false=or_bdds(lhs.false, rhs),
-                        true=or_bdds(lhs.true, rhs))
     else:
-        return Node.new(rhs.var,
-                        false=or_bdds(lhs, rhs.false),
-                        true=or_bdds(lhs, rhs.true))
+        return merge_bdds(lhs, rhs, or_bdds)
 
 
 def count_bdd(bdd: Node, nbits: int) -> int:
