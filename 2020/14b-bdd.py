@@ -1,5 +1,20 @@
 #!/usr/bin/env python3
 
+"""
+Implementation of day 14 part 2 using Binary Decision Diagrams.
+
+Capable of solving harder inputs with lots of Xs, like the part 1 example,
+or the inputs from https://www.reddit.com/r/adventofcode/comments/kcybyr/2002_day_14_part_2_but_what_if_the_input_is_harder/.
+
+(I skimmed the first few pages of the Knuth section describing them
+and then put it away and figured out these versions of the
+construction algorithms myself---though they aren't that hard, once
+you have the data structure designed. I did read Knuth's algorithm for
+counting.)
+
+TODO: Real documentation
+"""
+
 from __future__ import annotations
 
 from typing import *
@@ -53,7 +68,7 @@ def addr_mask_to_bdd(addr: Tuple[int, int], nbits: int) -> Node:
 
     return node
 
-
+# negate and and aren't actually used anymore, but were in early versions
 @lru_cache(maxsize=None)
 def negate_bdd(bdd: Node) -> Node:
     if bdd is TrueLeaf:
@@ -125,12 +140,12 @@ def or_bdds(lhs: Node, rhs: Node) -> Node:
                         true=or_bdds(lhs, rhs.true))
 
 
-def count_bdd(bdd: Node, nbits: int) -> Node:
+def count_bdd(bdd: Node, nbits: int) -> int:
     def gvar(bdd: Node) -> int:
         return nbits if isinstance(bdd, LeafNode) else bdd.var
 
     @lru_cache(maxsize=None)
-    def count(bdd: Node) -> Node:
+    def count(bdd: Node) -> int:
         if isinstance(bdd, LeafNode):
             return int(bdd.val)
         fsols, tsols = count(bdd.false), count(bdd.true)
@@ -154,7 +169,7 @@ def eval_bdd(nobe: Node, bits: int) -> bool:
         return eval_bdd(nobe.false, bits)
 
 
-def enum_bdd(bdd: Node, nbits: int) -> Node:
+def enum_bdd(bdd: Node, nbits: int) -> Iterator[int]:
     def gvar(bdd: Node) -> int:
         return nbits if isinstance(bdd, LeafNode) else bdd.var
 
@@ -202,6 +217,7 @@ def main(args):
 
     nbits = 0
 
+    # Construct a list of instructions that have the mask information built in
     writes = []
     for line in data:
         if "mask" in line:
@@ -209,28 +225,35 @@ def main(args):
             mmask = int(smask.replace("1", "0").replace("X", "1"), 2)
             mval = int(smask.replace("X", "0"), 2)
             nbits = max(nbits, len(smask))
-            # print(hex(mmask), hex(mval))
         else:
             addr, val = extract(line)
             addr |= mval
             addr &= ~mmask
             writes.append(((addr, mmask), val))
 
-    bdds = [addr_mask_to_bdd(mask, nbits) for mask, _ in writes]
-
-    # run backwards through the list and progressively union them all up
+    # run backwards through the instructions updating the counts
     count = 0
-    cur_union: Node = FalseLeaf
-    for i, ((_, val), bdd) in enumerate(zip(reversed(writes), reversed(bdds))):
-        andn_bdd = andn_bdds(bdd, cur_union)
+    after_bdd: Node = FalseLeaf
+    for i, (mask, val) in reversed(list(enumerate(writes))):
+        # Compute a bdd representing the set of addresses written by this instruction
+        bdd = addr_mask_to_bdd(mask, nbits)
+
+        # Find all addresses written by the current write and *not*
+        # by any subsequent write.
+        andn_bdd = andn_bdds(bdd, after_bdd)
+        # Score it
         size = count_bdd(andn_bdd, nbits)
         count += val * size
 
-        cur_union = or_bdds(cur_union, bdd)
-        print("sizes", i, size, bdd_size(bdd)) #, bdd_size(cur_union))
+        # Update the bdd of all later addresses
+        after_bdd = or_bdds(after_bdd, bdd)
+        # I would like to spew the size of after_bdd but that actually
+        # slows things down a fair bit!
+        print(f'{i=} {size=:x} {count=} {bdd_size(bdd)=}')
+
+    print(f'union size: {bdd_size(after_bdd)}, last and size: {bdd_size(andn_bdd)}')
 
     print(count)
-
 
 
 if __name__ == '__main__':
