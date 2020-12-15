@@ -86,6 +86,26 @@ def and_bdds(lhs: Node, rhs: Node) -> Node:
 
 
 @lru_cache(maxsize=None)
+def andn_bdds(lhs: Node, rhs: Node) -> Node:
+    if lhs is TrueLeaf and rhs is FalseLeaf:
+        return TrueLeaf
+    elif lhs is FalseLeaf or rhs is TrueLeaf:
+        return FalseLeaf
+    elif lhs.var == rhs.var:
+        return Node.new(lhs.var,
+                        false=andn_bdds(lhs.false, rhs.false),
+                        true=andn_bdds(lhs.true, rhs.true))
+    elif lhs.var < rhs.var:
+        return Node.new(lhs.var,
+                        false=andn_bdds(lhs.false, rhs),
+                        true=andn_bdds(lhs.true, rhs))
+    else:
+        return Node.new(rhs.var,
+                        false=andn_bdds(lhs, rhs.false),
+                        true=andn_bdds(lhs, rhs.true))
+
+
+@lru_cache(maxsize=None)
 def or_bdds(lhs: Node, rhs: Node) -> Node:
     if lhs is TrueLeaf or rhs is TrueLeaf:
         return TrueLeaf
@@ -103,11 +123,6 @@ def or_bdds(lhs: Node, rhs: Node) -> Node:
         return Node.new(rhs.var,
                         false=or_bdds(lhs, rhs.false),
                         true=or_bdds(lhs, rhs.true))
-
-
-# def or_bdds(lhs: Node, rhs: Node) -> Node:
-#     # ... minus one point for each additional law
-#     return negate_bdd(and_bdds(negate_bdd(lhs), negate_bdd(rhs)))
 
 
 def count_bdd(bdd: Node, nbits: int) -> Node:
@@ -201,15 +216,13 @@ def main(args):
             addr &= ~mmask
             writes.append(((addr, mmask), val))
 
-    # nbits = 8  # hack!
-
     bdds = [addr_mask_to_bdd(mask, nbits) for mask, _ in writes]
 
     # run backwards through the list and progressively union them all up
     count = 0
     cur_union: Node = FalseLeaf
     for i, ((_, val), bdd) in enumerate(zip(reversed(writes), reversed(bdds))):
-        andn_bdd = and_bdds(bdd, negate_bdd(cur_union))
+        andn_bdd = andn_bdds(bdd, cur_union)
         size = count_bdd(andn_bdd, nbits)
         count += val * size
 
