@@ -11,8 +11,8 @@ def valid(n, r):
     (a,b),(c,d) = r
     return (a <= n <= b) or (c <= n <= d)
 
+
 def main(args):
-    # data = [x.split('\n') for x in sys.stdin.read().split('\n\n')]
     data = [s.strip() for s in sys.stdin]
 
     fields = {}
@@ -21,8 +21,6 @@ def main(args):
         thing = x.split(":")[0]
         a,b,c,d = extract(x)
         fields[thing] = ((a,b),(c,d))
-
-    print(fields)
 
     tickets = []
     for x in data[i:]:
@@ -33,24 +31,24 @@ def main(args):
     my_ticket = tickets[0]
     tickets = tickets[1:]
 
-    print(tickets)
     cnt = 0
     fucked = []
     good = []
     for t in tickets:
-        if not [
+        bad = [
             v
             for v in t
             if all(not valid(v, r) for r in fields.values())
-        ]:
+        ]
+        fucked += bad
+        if not bad:
             good.append(t)
 
+    part1 = sum(fucked)
 
     options = [set(fields.keys()) for _ in range(len(good[0]))]
-    print(len(good[0]))
     for t in good:
         for i, f in enumerate(t):
-            print(fields)
             opts = set(name for name, range in fields.items()
                        if valid(f, range))
             options[i] &= opts
@@ -77,6 +75,8 @@ def main(args):
     print(depts)
     prod = 1
     for x in depts: prod *= x
+
+    print(part1)
     print(prod)
 
 
