@@ -23,43 +23,38 @@ def add(v1, v2):
     return tuple(x + y for x, y in zip(v1, v2))
 
 def step(grid):
-    ngrid = copy.deepcopy(grid)
-    # ngrid = [x[:] for x in grid]
-    change = False
-    for pos in list(grid):
-        for dx in nbrs + [(0, 0, 0, 0)]:
-            npos = add(dx, pos)
-            cnt = 0
-            for d in nbrs:
-                if grid[add(npos, d)] == "#":
-                    cnt += 1
+    ngrid = set()
 
-            # print(cnt)
-            if grid[npos] == '#' and not (cnt == 2 or cnt == 3):
-                ngrid[npos] = '.'
-                change = True
-            elif grid[npos] == '.' and cnt == 3:
-                ngrid[npos] = '#'
-                change = True
+    squares = grid | {add(dx, pos) for pos in grid for dx in nbrs}
 
-    return ngrid, change
+    for npos in squares:
+        cnt = 0
+        for d in nbrs:
+            if add(npos, d) in grid:
+                cnt += 1
+
+        if npos in grid and (cnt == 2 or cnt == 3):
+            ngrid.add(npos)
+        elif npos not in grid and cnt == 3:
+            ngrid.add(npos)
+
+    return ngrid
 
 
 def main(args):
-    # data = [x.split('\n') for x in sys.stdin.read().split('\n\n')]
     data = [list(s.strip()) for s in sys.stdin]
-    grid = defaultdict(lambda: ".")
 
+    grid = set()
     for y in range(len(data)):
         for x in range(len(data[0])):
-            grid[x,y,0,0] = data[y][x]
+            if data[y][x] == '#':
+                grid.add((x,y,0,0))
 
     for i in range(6):
-        print(i, grid)
-        grid, _ = step(grid)
+        # print(i, grid)
+        grid = step(grid)
 
     print(len(grid))
-    print(len([x for x in grid.values() if x == '#']))
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv))
