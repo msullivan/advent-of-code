@@ -16,7 +16,7 @@ def rotate(g):
         s = ''.join(x[i] for x in g)
         xs.append(s)
 
-    return tuple(reversed(xs))
+    return flip(xs)
 
 def flip(g):
     return tuple(reversed(g))
@@ -39,6 +39,8 @@ def moves(g):
         yield g
         yield flip(g)
         g = rotate(g)
+    # all the callers should break out of the loop when they find something
+    raise AssertionError("move search didn't find anything!")
 
 MONSTER = """\
                   #
@@ -52,7 +54,7 @@ def main(args):
     tiles = {}
     for tile in data:
         n = extract(tile[0])[0]
-        tiles[n] = flip(tile[1:])
+        tiles[n] = tile[1:]
 
     N = int(math.sqrt(len(tiles)))
 
@@ -76,7 +78,7 @@ def main(args):
     # unmatched edges are facing up and left.
     corner_n = corners[0]
     ltile = tiles[corner_n]
-    while len(edge_map[ledge(ltile)]) == 2:
+    while not (len(edge_map[ledge(ltile)]) == len(edge_map[ltile[0]]) == 1):
         ltile = rotate(ltile)
 
     # Place the tiles one at a time. Since they are uniquely matched
