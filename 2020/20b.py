@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
+import operator
 import math
-import copy
+import functools
 from collections import defaultdict
 import sys
 import re
@@ -18,7 +19,7 @@ def rotate(g):
     return tuple(reversed(xs))
 
 def flip(g):
-    return tuple(reversed(xs))
+    return tuple(reversed(g))
 
 def ledge(g):
     return ''.join(x[0] for x in g)
@@ -27,123 +28,96 @@ def redge(g):
     return ''.join(x[-1] for x in g)
 
 def edges(g):
-    return sorted([
-        g[0], g[-1], ledge(g), redge(g),
-    ])
+    return [g[0], g[-1], ledge(g), redge(g)]
 
 def all_edges(g):
     es = edges(g)
-    return sorted(es + [''.join(reversed(x)) for x in es])
+    return es + [''.join(reversed(x)) for x in es]
+
+def moves(g):
+    for _ in range(4):
+        yield g
+        yield flip(g)
+        g = rotate(g)
 
 MONSTER = """\
-                  # |
+                  #
 #    ##    ##    ###
- #  #  #  #  #  #   """.replace("|", "").split('\n')
-
-PIC = """\
-.#.#..#.##...#.##..#####
-###....#.#....#..#......
-##.##.###.#.#..######...
-###.#####...#.#####.#..#
-##.#....#.##.####...#.##
-...########.#....#####.#
-....#..#...##..#.#.###..
-.####...#..#.....#......
-#..#.##..#..###.#.##....
-#.####..#.####.#.#.###..
-###.#.#...#.######.#..##
-#.####....##..########.#
-##..##.#...#...#.#.#.#..
-...#..#..#.#.##..###.###
-.#.#....#.##.#...###.##.
-###.#...#..#.##.######..
-.#.#.###.##.##.#..#.##..
-.####.###.#...###.#..#.#
-..#.#..#..#.#.#.####.###
-#..####...#.#.#.###.###.
-#####..#####...###....##
-#.##..#..#...#..####...#
-.#.###..##..##..####.##.
-...###...##...#...#..###""".split('\n')
+ #  #  #  #  #  #   """.split('\n')
 
 def main(args):
-    data = [x.strip().split('\n') for x in sys.stdin.read().split('\n\n')]
-    # data = [s.strip() for s in sys.stdin]
+    data = [x.strip().split('\n') for x in sys.stdin.read().strip().split('\n\n')]
 
+    # Parse
     tiles = {}
     for tile in data:
         n = extract(tile[0])[0]
-        tiles[n] = tile[1:]
+        tiles[n] = flip(tile[1:])
 
-    start, test = next(iter(tiles.items()))
+    N = int(math.sqrt(len(tiles)))
 
+    # Build map from possible edges to the tiles that use them
     edge_map = defaultdict(list)
     for n, tile in tiles.items():
         for e in all_edges(tile):
             edge_map[e].append(n)
 
-    part1 = 1
-    last = -1
+    # Find the corners: they are the tiles that only have two edges
+    # that are shared with other tiles.
+    corners = []
     for n, tile in tiles.items():
         cnt = 0
         for e in edges(tile):
             cnt += len(edge_map[e]) - 1
         if cnt == 2:
-            part1 *= n
-            last = n
+            corners.append(n)
 
-    ltile = tiles[last]
+    # Pick a corner to be the top-left, and try rotations until the
+    # unmatched edges are facing up and left.
+    corner_n = corners[0]
+    ltile = tiles[corner_n]
     while len(edge_map[ledge(ltile)]) == 2:
         ltile = rotate(ltile)
-    if len(edge_map[ltile[0]]) == 2:
-        ltile = list(reversed(ltile))
 
-    N = int(math.sqrt(len(tiles)))
+    # Place the tiles one at a time. Since they are uniquely matched
+    # up, there's always one unique option for each spot. When going
+    # across rows, we pick the one that lines up to the left, and in
+    # the first column pick the one that matches at the top.
+    def pick(ln, lgrid):
+        """Find a tile and rotation of it to go to the right of ln/lgrid"""
+        re = redge(lgrid)
+        me = [x for x in edge_map[re] if x != ln][0]
+        mtile = tiles[me]
+        for mtile in moves(mtile):
+            if re == ledge(mtile):
+                break
+        return me, mtile
 
     mgrid = [[None] * N for x in range(N)]
-    mgrid[0][0] = last, ltile
-    y = 0
+    mgrid[0][0] = corner_n, ltile
     for y in range(0, N):
         if y > 0:
             ln, lgrid = mgrid[y-1][0]
-            be = lgrid[-1]
-            me = [x for x in edge_map[be] if x != ln][0]
-            mtile = tiles[me]
-            while be != mtile[0]:
-                mrev = list(reversed(mtile))
-                if be == mrev[0]:
-                    mtile = mrev
-                    break
-                mtile = rotate(mtile)
-            mgrid[y][0] = me, mtile
-
+            # pick looks for something that matches on the right edge,
+            # so rotate and flip so our bottom edge is the right edge,
+            # and reverse the transform at the end
+            me, mtile = pick(ln, flip(rotate(lgrid)))
+            mgrid[y][0] = (me, flip(rotate(mtile)))
 
         for x in range(1, N):
-            if x == y == 0: continue
-
             ln, lgrid = mgrid[y][x-1]
-            re = redge(lgrid)
-            me = [x for x in edge_map[re] if x != ln][0]
-            mtile = tiles[me]
-            while re != ledge(mtile):
-                mrev = list(reversed(mtile))
-                if re == ledge(mrev):
-                    mtile = mrev
-                    break
-                mtile = rotate(mtile)
+            mgrid[y][x] = pick(ln, lgrid)
 
-            mgrid[y][x] = me, mtile
-
-    ngrid = copy.deepcopy(mgrid)
-    for i, row in enumerate(ngrid):
-        for j, col in enumerate(ngrid[i]):
-            x = list(col[1])
-            x.pop(0)
-            x.pop()
+    # Strip the borders off of each tile
+    ngrid = [[None] * N for x in range(N)]
+    for i, row in enumerate(mgrid):
+        for j, (_, col) in enumerate(row):
+            x = list(col[1:-1])
             for k in range(len(x)):
                 x[k] = x[k][1:-1]
             ngrid[i][j] = x
 
+    # Build one big image
     pic = []
     for i, row in enumerate(ngrid):
         for i2 in range(len(row[0])):
@@ -152,11 +126,12 @@ def main(args):
                 s += col[i2]
             pic.append(s)
 
-    cnt = 0
-    for i in range(8):
-        t = len(MONSTER[0])
+    # Look for monsters
+    for pic in moves(pic):
+        cnt = 0
         for y in range(len(pic)-len(MONSTER)):
             for x in range(len(pic)-len(MONSTER[0])):
+                # Check if there's a monster starting at this position
                 match = True
                 for y0 in range(len(MONSTER)):
                     for x0 in range(len(MONSTER[y0])):
@@ -171,13 +146,14 @@ def main(args):
 
         if cnt:
             break
-        pic = rotate(pic)
-        if i == 3:
-            pic = list(reversed(pic))
+
+    # Wooooooo
+    part1 = functools.reduce(operator.mul, corners)
+    print(part1)
 
     everything = ''.join(pic).count('#')
     monster = ''.join(MONSTER).count('#')
-    print(part1)
+
     print(everything - monster*cnt)
 
 if __name__ == '__main__':
