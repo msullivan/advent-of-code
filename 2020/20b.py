@@ -83,48 +83,40 @@ def main(args):
     # up, there's always one unique option for each spot. When going
     # across rows, we pick the one that lines up to the left, and in
     # the first column pick the one that matches at the top.
-    def pick(ln, lgrid):
-        """Find a tile and rotation of it to go to the right of ln/lgrid"""
-        re = redge(lgrid)
-        me = [x for x in edge_map[re] if x != ln][0]
+    def pick(ln, edge, get_edge):
+        """Find a tile and rotation of it that matches with ln/ledge.
+
+        get_edge picks the edge of the new tile to compare against.
+        """
+        me = [x for x in edge_map[edge] if x != ln][0]
         mtile = tiles[me]
         for mtile in moves(mtile):
-            if re == ledge(mtile):
+            if edge == get_edge(mtile):
                 break
         return me, mtile
 
-    mgrid = [[None] * N for x in range(N)]
+    mgrid = [[None] * N for _ in range(N)]
     mgrid[0][0] = corner_n, ltile
     for y in range(0, N):
         if y > 0:
             ln, lgrid = mgrid[y-1][0]
-            # pick looks for something that matches on the right edge,
-            # so rotate and flip so our bottom edge is the right edge,
-            # and reverse the transform at the end
-            me, mtile = pick(ln, flip(rotate(lgrid)))
-            mgrid[y][0] = (me, flip(rotate(mtile)))
+            mgrid[y][0] = pick(ln, lgrid[-1], get_edge=lambda g: g[0])
 
         for x in range(1, N):
             ln, lgrid = mgrid[y][x-1]
-            mgrid[y][x] = pick(ln, lgrid)
+            mgrid[y][x] = pick(ln, redge(lgrid), get_edge=ledge)
 
     # Strip the borders off of each tile
-    ngrid = [[None] * N for x in range(N)]
+    ngrid = [[None] * N for _ in range(N)]
     for i, row in enumerate(mgrid):
         for j, (_, col) in enumerate(row):
-            x = list(col[1:-1])
-            for k in range(len(x)):
-                x[k] = x[k][1:-1]
-            ngrid[i][j] = x
+            ngrid[i][j] = [x[1:-1] for x in col[1:-1]]
 
     # Build one big image
     pic = []
-    for i, row in enumerate(ngrid):
-        for i2 in range(len(row[0])):
-            s = ''
-            for j, col in enumerate(ngrid[i]):
-                s += col[i2]
-            pic.append(s)
+    for row in ngrid:
+        for i in range(len(row[0])):
+            pic += [''.join(col[i] for col in row)]
 
     # Look for monsters
     for pic in moves(pic):
