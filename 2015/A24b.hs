@@ -29,7 +29,7 @@ search packages =
 pack packages = search packages
 
 --solve :: String -> Int
-solve = pack . map read . lines
+solve = snd . minimum . pack . map read . lines
 
 answer f = interact $ (++"\n") . show . f
 main = answer solve
