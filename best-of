@@ -1,0 +1,70 @@
+-- This is still incomplete: 2016 and 2017 in particular need some more love.
+
+The criteria for inclusion here are somewhat unclear.
+
+=== 2015
+
+Day 7: Some Assembly Required -- a fun early problem that maybe is mostly memorable to me because I did haskell nonsense
+
+Day 13: Knights of the Dinner Table -- permutation city. I dunno?
+
+Day 19: Medicine for Rudolph -- I dunno, maybe this one is just infamous.
+
+=== 2016
+
+Day 11: Radioisotope Thermoelectric Generators -- search, search, search! LB open for 2:45!
+
+Day 17: Permutation Promenade -- cute small problem with at least two solutions to part two: a beautiful one, and the one you'll probably implement
+
+Day 23: Safe Cracking -- VM stuff, including reverse engineering. Day 12 is a prereq
+
+=== 2017
+
+Day 18: Duet -- a solid VM puzzle mostly recommended for its trolling
+
+=== 2018
+
+Day 12: Subterranean Sustainability -- 1D cellular automata - I created some "Upping the Ante" puzzles that I really enjoyed solving: https://gist.github.com/msullivan/a477fd32c598da94fe495a884a440f59
+
+Day 17: Reservoir Research -- I'm actually not sure if I liked this one or not, but it's iconic and very visual.
+
+Day 20: A Regular Map -- another fun search problem, using a simple regex to generate a map
+
+Day 22: Mode Maze -- search through a procedurally generated maze, with some twists
+
+Day 23: Coprocessor Conflagration -- implementing a VM and reverse engineering a program
+
+=== 2019
+
+Day 12: The N-Body Problem -- light-medium maths with fun framing
+
+Day 14: Space Stoichiometry -- search through a term rewriting system
+
+Day 18: Many-Worlds Interpretation -- One of my favorite search AoC problems
+
+Day 22: Slam Shuffle -- maths! One of the best AoC puzzles
+
+
+2019, the IntCode sequence:
+ - IntCode was kind of polarizing, but overall I liked it. Over several puzzles, you build a reasonably featured virtual machine, and which then gets reused for all the odd-numbered puzzles after day 9 in various ways, generally as a kind of black box input
+  - Building the VM: days 2, 5, 9
+  Intcode puzzles! I've listed more of these than maybe really deserve it, because Intcode is very "iconic 2019 AoC".
+
+  * Day 7: Amplification Circuit -- cute reconfiguration of Intcode VMs... there is a truly elegant bullshit Haskell way to do this.
+  * Day 11: Space Police -- an unusual extraction
+  * Day 13: Care Package -- Play (probably programatically.) a breakout clone running in Intcode. YMMV.
+  * Day 15: Oxygen System -- exploring a maze with an intcode robot
+  * Day 21: Springdroid -- a puzzle, but not quite a programming one
+  * Day 25: Cryostasis -- a text adventure game!
+
+=== 2020
+
+Day 14: Docking Data -- Good but not great, but I think the "upping the ante" problem is great: https://www.reddit.com/r/adventofcode/comments/kcybyr/2002_day_14_part_2_but_what_if_the_input_is_harder/
+
+Day 19: Monster Messages -- kind of fine I guess
+
+Day 20: Jurassic Jigsaw -- image reassembly
+
+-----
+
+infamy: elves v goblins, z3, fft, what else?
