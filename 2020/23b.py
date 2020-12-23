@@ -2,19 +2,16 @@
 
 import sys
 
-# huh this doesn't actually need to be doubly linked
 class Nobe:
-    def __init__(self, val, next, prev):
+    def __init__(self, val):
         self.val = val
-        self.next = next
-        self.prev = prev
+        self.next = None
 
 def go(cur, map, N):
     start3 = cur.next
     last3 = start3.next.next
     end3 = last3.next
     cur.next = end3
-    end3.prev = cur
     up = [start3.val, start3.next.val, start3.next.next.val]
 
     dest = cur.val - 1
@@ -27,8 +24,6 @@ def go(cur, map, N):
 
     dnode = map[dest]
     last3.next = dnode.next
-    start3.prev = dnode
-    last3.next.prev = last3
     dnode.next = start3
 
     return cur.next
@@ -47,14 +42,13 @@ def main(args):
     map = [None]*(N+1)
     for i in range(1000000):
         val = cups[i] if i < lcups else i+1
-        nobe = Nobe(prev=last, next=None, val=val)
+        nobe = Nobe(val)
         map[val] = nobe
         if first is None:
             first = nobe
         if last is not None:
             last.next = nobe
         last = nobe
-    first.prev = last
     last.next = first
     cur = first
 
