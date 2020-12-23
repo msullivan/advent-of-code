@@ -2,6 +2,7 @@
 
 import sys
 
+# huh this doesn't actually need to be doubly linked
 class Nobe:
     def __init__(self, val, next, prev):
         self.val = val
@@ -39,11 +40,11 @@ def main(args):
 
     print(cups)
 
-    map = {}
     last = None
     first = None
     lcups = len(cups)
     N = 1000000
+    map = [None]*(N+1)
     for i in range(1000000):
         val = cups[i] if i < lcups else i+1
         nobe = Nobe(prev=last, next=None, val=val)
