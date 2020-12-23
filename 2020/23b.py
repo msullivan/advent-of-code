@@ -35,22 +35,18 @@ def main(args):
 
     print(cups)
 
-    last = None
-    first = None
     lcups = len(cups)
     N = 1000000
     map = [None]*(N+1)
+
+    last = dummy = Nobe(-1)
     for i in range(1000000):
         val = cups[i] if i < lcups else i+1
         nobe = Nobe(val)
         map[val] = nobe
-        if first is None:
-            first = nobe
-        if last is not None:
-            last.next = nobe
+        last.next = nobe
         last = nobe
-    last.next = first
-    cur = first
+    cur = last.next = dummy.next
 
     for i in range(10000000):
         if i % 10000 == 0:
