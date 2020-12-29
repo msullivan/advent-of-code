@@ -1,18 +1,22 @@
 #!/usr/bin/env python3
 
+from __future__ import annotations
+
+from typing import Optional, List
+
 import sys
 
 class Nobe:
-    def __init__(self, val):
+    def __init__(self, val: int) -> None:
         self.val = val
-        self.next = None
+        self.next = self
 
-def go(cur, map, N):
+def go(cur: Nobe, map: List[Nobe], N: int) -> Nobe:
     start3 = cur.next
     last3 = start3.next.next
     end3 = last3.next
     cur.next = end3
-    up = [start3.val, start3.next.val, start3.next.next.val]
+    up = {start3.val, start3.next.val, start3.next.next.val}
 
     dest = cur.val - 1
     if dest == 0:
@@ -29,7 +33,7 @@ def go(cur, map, N):
     return cur.next
 
 
-def main(args):
+def main(args: List[str]) -> None:
     data = [s.strip() for s in sys.stdin]
     cups = [int(x) for x in data[0]]
 
@@ -37,9 +41,10 @@ def main(args):
 
     lcups = len(cups)
     N = 1000000
-    map = [None]*(N+1)
+    dummy = Nobe(-1)
+    map = [dummy]*(N+1)
 
-    last = dummy = Nobe(-1)
+    last = dummy
     for i in range(1000000):
         val = cups[i] if i < lcups else i+1
         nobe = Nobe(val)
@@ -61,4 +66,4 @@ def main(args):
 
 
 if __name__ == '__main__':
-    sys.exit(main(sys.argv))
+    main(sys.argv)
