@@ -1,3 +1,9 @@
+-- This is implemented with a "pruning search monad" that maintains a
+-- value based on previously output stuff and can use that to do
+-- cutoffs. This is cute but works worse than the thing now
+-- implemented for part 2 which is to start with short initial
+-- subsequences and work up.
+
 -- For Prune
 import Control.Monad
 import Control.Monad.Reader
