@@ -12,12 +12,25 @@ subsequences_n n [] = []
 subsequences_n n (x:xs) =
   map (x:) (subsequences_n (n-1) xs) ++ subsequences_n n xs
 
+-- Oh, even better, restrict the sum as we go. This makes it all *really* fast.
+subsequences_sum_n 0 0 _ = [[]]
+subsequences_sum_n 0 k _ = []
+subsequences_sum_n n _ [] = []
+subsequences_sum_n _ k _ | k < 0 = []
+subsequences_sum_n n k (x:xs) =
+  map (x:) (subsequences_sum_n (n-1) (k-x) xs) ++ subsequences_sum_n n k xs
+
+subsequences_sum 0 _ = [[]]
+subsequences_sum k _ | k < 0 = []
+subsequences_sum _ [] = []
+subsequences_sum k (x:xs) =
+  map (x:) (subsequences_sum (k-x) xs) ++ subsequences_sum k xs
+
 partitionsBy subs cost xs =
-  do l <- subs xs
-     guard $ sum l == cost
+  do l <- subs cost xs
      return (l, xs \\ l)
 
-partitions = partitionsBy subsequences
+partitions = partitionsBy subsequences_sum
 
 partitions3 cost l =
   do (a, b) <- partitions cost l
@@ -26,7 +39,7 @@ partitions3 cost l =
 
 search :: Int -> [Int] -> [(Int, Int)]
 search len packages =
-  do (a, bcd) <- partitionsBy (subsequences_n len) cost packages
+  do (a, bcd) <- partitionsBy (subsequences_sum_n len) cost packages
      guard $ not $ null $ partitions3 cost bcd
      return (length a, product a)
 
