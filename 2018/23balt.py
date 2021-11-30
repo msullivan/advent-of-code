@@ -17,6 +17,7 @@ from typing import *
 def extract(s: str) -> List[int]:
     return [int(x) for x in re.findall(r'-?\d+', s)]
 
+
 def clamp(lo: int, hi: int, val: int) -> int:
     return min(hi, max(lo, val))
 
@@ -48,19 +49,12 @@ class Bot(NamedTuple):
     def contains(self, p: Pos) -> bool:
         return self.p.dist(p) <= self.r
 
-    def contains_box(self, box: Box) -> bool:
-        return self.contains(box.bot) and self.contains(box.top)
-
     def overlaps_box(self, box: Box) -> bool:
         return self.contains(box.closest_to(self.p))
 
 
 def compute_upper(bots: List[Bot], box: Box) -> int:
     return sum(bot.overlaps_box(box) for bot in bots)
-
-
-def compute_lower(bots: List[Bot], box: Box) -> int:
-    return sum(bot.contains_box(box) for bot in bots)
 
 
 def split_box(box: Box) -> Set[Box]:
@@ -98,11 +92,11 @@ def main(args: List[str]) -> None:
     while True:
         nupper, dist, box = heapq.heappop(heap)
         upper = -nupper
-        lower = compute_lower(bots, box)
-        print(box, lower, upper, len(heap))
-        # If the bounds are pushed down to where they coincide, then this must
-        # be the optimal place. (Because the heap ensures we work in order.)
-        if upper == lower:
+        print(box, upper, len(heap))
+        # When the box has been shrunk to a point, then the upper
+        # bound must be tight and this must be the optimal
+        # place. (Because the heap ensures we work in order.)
+        if box.bot == box.top:
             print(box.closest_to(ZERO))
             print(dist)
             break
