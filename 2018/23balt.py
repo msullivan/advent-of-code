@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+# This is an honest solution for 23b, as opposed to the Z3 solution
+# that I did at the time that got me 2nd place.
+
 # This is pretty directly adapted from
 # https://github.com/sim642/adventofcode/blob/master/src/main/scala/eu/sim642/adventofcode2018/Day23.scala,
 # which I read, thought about, then reimplemented in Python.
@@ -97,7 +100,7 @@ def main(args: List[str]) -> None:
         # bound must be tight and this must be the optimal
         # place. (Because the heap ensures we work in order.)
         if box.bot == box.top:
-            print(box.closest_to(ZERO))
+            print(box.bot)
             print(dist)
             break
 
