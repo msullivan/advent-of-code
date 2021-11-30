@@ -1,6 +1,6 @@
 *~
 *.test
-*.input
+*.input*
 *.realinput
 *.o
 *.hi
