@@ -80,17 +80,20 @@ class Box:
             *[clamp(lo, hi, val) for lo, hi, val in zip(self.bot, self.top, p)]
         )
 
+    def is_valid(self) -> bool:
+        return all(b <= t for b, t in zip(self.bot, self.top))
+
     def split(self) -> Set[Box]:
         """Split a box into 8 sub boxes"""
         mid = Pos(*[(c1 + c2) // 2 for c1, c2 in zip(self.bot, self.top)])
         mid1 = Pos(*[c+1 for c in mid])
         opts = [(self.bot, mid), (mid1, self.top)]
-        return {
+        return {x for x in (
             Box(Pos(oxl.x, oyl.y, ozl.z), Pos(oxh.x, oyh.y, ozh.z))
             for oxl, oxh in opts
             for oyl, oyh in opts
             for ozl, ozh in opts
-        } - {self}
+        ) if x.is_valid()} - {self}
 
 
 @dataclass(frozen=True)
@@ -152,6 +155,7 @@ def main(args: List[str]) -> None:
             heapq.heappush(heap, key(sbox, bots))
 
     print()
+    print(-neg_overlapping)
     print(box.bot)
     print(part_1)
     print(dist)
