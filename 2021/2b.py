@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
 import sys
-
+from parse import parse
 import re
+
 
 def extract(s, pos=False):
     p = '' if pos else '-?'
@@ -14,11 +15,11 @@ def main(args):
     x, y = 0, 0
     aim = 0
     for line in data:
-        num = extract(line)[0]
-        if line.startswith('forward'):
+        cmd, num = parse('{} {:d}', line)
+        if cmd == 'forward':
             x += num
             y += aim*num
-        elif line.startswith('down'):
+        elif cmd == 'down':
             aim += num
         else:
             aim -= num

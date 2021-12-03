@@ -3,6 +3,7 @@
 import sys
 
 from collections import defaultdict, Counter
+from parse import parse
 import re
 
 def extract(s, pos=False):
