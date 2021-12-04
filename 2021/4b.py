@@ -25,10 +25,7 @@ def main(args):
     rest = "\n".join(data[1:]).split("\n\n")
     things = []
     for thing in rest:
-        things.append([extract(s) for s in thing.split('\n')])
-        if not things[-1][0]:
-            things[-1].pop(0)
-
+        things.append([extract(s) for s in thing.strip().split('\n')])
 
     boards = things
 
