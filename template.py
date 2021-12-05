@@ -2,7 +2,7 @@
 
 import sys
 
-from collections import defaultdict, Counter
+from collections import defaultdict, Counter, deque
 from parse import parse
 import re
 
