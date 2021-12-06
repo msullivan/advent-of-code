@@ -15,9 +15,8 @@ def main(args):
     data = extract(data[0])
 
     cs = Counter(data)
-    print(cs)
 
-    for _ in range(256):
+    for n in range(256):
         ncs = Counter()
         for i in range(9):
             if i == 0:
@@ -26,6 +25,8 @@ def main(args):
             else:
                 ncs[i-1] += cs[i]
         cs = ncs
+        if n == 79:
+            print(sum(cs.values()))  # part A
 
     print(sum(cs.values()))
 
