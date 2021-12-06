@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
-
+from collections import defaultdict
 import re
 
 def extract(s, pos=False):
