@@ -6,9 +6,8 @@ from collections import defaultdict, Counter, deque
 from parse import parse
 import re
 
-def extract(s, pos=False):
-    p = '' if pos else '-?'
-    return [int(x) for x in re.findall(fr'{p}\d+', s)]
+def extract(s):
+    return [int(x) for x in re.findall(r'(-?\d+).?', s)]
 
 def vadd(v1, v2):
     return tuple(x + y for x, y in zip(v1, v2))
