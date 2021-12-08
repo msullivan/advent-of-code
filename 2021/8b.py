@@ -2,43 +2,6 @@
 
 import sys
 
-import copy
-from collections import defaultdict, Counter, deque
-from parse import parse
-import re
-
-def extract(s, pos=False):
-    p = '' if pos else '-?'
-    return [int(x) for x in re.findall(fr'{p}\d+', s)]
-
-def vadd(v1, v2):
-    return tuple(x + y for x, y in zip(v1, v2))
-
-def ichr(i):
-    return chr(ord('a') + i)
-
-def iord(c):
-    return ord(c.lower()) - ord('a')
-
-def optidx(d, opt=max, nth=0):
-    if not isinstance(d, dict):
-        d = dict(enumerate(d))
-    rv = opt(d.values())
-    return [i for i, v in d.items() if v == rv][nth], rv
-
-LETTERS = "abcdefghijklmnopqrstuvwxyz"
-
-UP, RIGHT, DOWN, LEFT = VDIRS = (0, -1), (1, 0), (0, 1), (-1, 0),
-DIRS = {'N': UP, 'E': RIGHT, 'S': DOWN, 'W': LEFT }
-ALL_DIRS = [(x, y) for x in [-1,0,1] for y in [-1,0,1] if not x == y == 0]
-
-def turn(v, d='left'):
-    n = -1 if d == 'left' else 1
-    return VDIRS[(VDIRS.index(v) + n + len(VDIRS))%len(VDIRS)]
-
-
-##############################
-
 CS = [
     "abcefg", "cf", "acdeg", "acdfg", "bcdf",
     "abdfg", "abdefg", "acf", "abcdefg", "abcdfg",
@@ -66,10 +29,8 @@ def solve(codes, nums):
     print(rmap)
     la = get(list(set(rmap[7]) - set(rmap[1])))
     bd = (set(rmap[4]) - (set(rmap[1])|set(rmap[7])))
-    # lb = get(set(rmap[4]) - (set(rmap[1])|set(rmap[7])))
 
     cf = (set(rmap[1])&set(rmap[7])&set(rmap[4]))
-    # ld = get(set(rmap[4]) - {la, lb, *cf})
 
     # 2, 3, 5
     fives = [set(x) for x in codes if len(x) == 5]
@@ -77,13 +38,12 @@ def solve(codes, nums):
     print("THREE", three)
     ld = get(bd & three)
     lb = get(set(rmap[4]) - {la, ld, *cf})
-    lg = list(three - {la, ld, *cf})[0]
+    lg = get(three - {la, ld, *cf})
 
     sixes = [set(x) for x in codes if len(x) == 6]
-    nine = [x for x in sixes if (cf|{ld}).issubset(x)][0]
+    nine = get([x for x in sixes if (cf|{ld}).issubset(x)])
     print("NINE", nine)
-    le = None
-    le = list(set("abcdefg") - nine)[0]
+    le = get(set("abcdefg") - nine)
 
     # just c, f
     five = get([x for x in fives if le not in x and lb in x])
