@@ -9,18 +9,13 @@ CS = [
     "abcefg", "cf", "acdeg", "acdfg", "bcdf",
     "abdfg", "abdefg", "acf", "abcdefg", "abcdfg",
 ]
-MCS = {k: i for i, k in enumerate(CS)}
-
-def get(s):
-    l = list(s)
-    assert len(l) == 1, s
-    return l[0]
+MCS = {frozenset(k): i for i, k in enumerate(CS)}
 
 def solve(codes, nums):
     LETS = "abcdefg"
     for perm in itertools.permutations(LETS):
         m = {k: v for k, v in zip(perm, LETS)}
-        pcodes = ["".join(sorted(m[c] for c in code)) for code in codes]
+        pcodes = [frozenset([m[c] for c in code]) for code in codes]
         matches = {MCS.get(pcode) for pcode in pcodes}
         if len(matches) == 10 and None not in matches:
             break
@@ -29,7 +24,7 @@ def solve(codes, nums):
 
     snum = ""
     for num in nums:
-        numk = "".join(sorted(m[c] for c in num))
+        numk = frozenset(m[c] for c in num)
         snum += str(MCS[numk])
     print(snum)
     return int(snum)
