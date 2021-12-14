@@ -4,6 +4,8 @@ import sys
 
 import re
 
+BLOCK = "█"
+
 def extract(s):
     return [int(x) for x in re.findall(r'(-?\d+).?', s)]
 
@@ -39,7 +41,7 @@ def main(args):
     for y in range(max_y+1):
         l = ""
         for x in range(max_x+1):
-            c = "#" if (x, y) in dots else " "
+            c = BLOCK if (x, y) in dots else " "
             l += c
         print(l)
 
