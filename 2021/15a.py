@@ -31,9 +31,10 @@ def main(args):
         cur = min(todo, key=lambda x: cost[x])
         todo.remove(cur)
         for nbr in edges(m, cur):
-            if nbr not in cost:
+            ncost = cost[cur] + m[nbr]
+            if nbr not in cost or cost[nbr] > ncost:
                 todo.append(nbr)
-                cost[nbr] = cost[cur] + m[nbr]
+                cost[nbr] = ncost
 
     print(cost[target])
 
