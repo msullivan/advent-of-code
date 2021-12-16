@@ -57,22 +57,25 @@ def calc_sum(packet):
 def eval(packet):
     ver, tid, args = packet
 
-    if tid == 0:
-        return sum(eval(arg) for arg in args)
-    elif tid == 1:
-        return reduce(operator.mul, (eval(arg) for arg in args))
-    elif tid == 2:
-        return min(eval(arg) for arg in args)
-    elif tid == 3:
-        return max(eval(arg) for arg in args)
-    elif tid == 4:
+    if tid == 4:
         return args
+
+    vals = [eval(arg) for arg in args]
+
+    if tid == 0:
+        return sum(vals)
+    elif tid == 1:
+        return reduce(operator.mul, vals)
+    elif tid == 2:
+        return min(vals)
+    elif tid == 3:
+        return max(vals)
     elif tid == 5:
-        return int(eval(args[0]) > eval(args[1]))
+        return int(vals[0] > vals[1])
     elif tid == 6:
-        return int(eval(args[0]) < eval(args[1]))
+        return int(vals[0] < vals[1])
     elif tid == 7:
-        return int(eval(args[0]) == eval(args[1]))
+        return int(vals[0] == vals[1])
 
 
 def main(args):
