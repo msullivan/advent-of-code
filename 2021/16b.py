@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
-
-from functools import reduce
-import operator
-
+import math
 
 def int2(s):
     return int(s, 2)
@@ -65,7 +62,7 @@ def eval(packet):
     if tid == 0:
         return sum(vals)
     elif tid == 1:
-        return reduce(operator.mul, vals)
+        return math.prod(vals)
     elif tid == 2:
         return min(vals)
     elif tid == 3:
