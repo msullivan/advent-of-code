@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
 
-# I solved this with programming but like not *correct* programming?
-# It works for the input I gave and was developed while looking at the map.
-
 import os
 import copy
 import sys
