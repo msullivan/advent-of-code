@@ -33,8 +33,8 @@ def move(path, p, dir):
 
 def explode(top, p, n, path):
     if isinstance(p, list) and n == 4:
-        l = move(path + (0,), top, 0)
-        r = move(path + (1,), top, 1)
+        l = move(path, top, 0)
+        r = move(path, top, 1)
         x, y = p
         if l:
             write_idx(top, l, idx(top, l) + x)
