@@ -18,40 +18,27 @@ def write_idx(p, path, x):
     p[path[-1]] = x
 
 
-def left(path, p):
-    while path and path[-1] == 0:
+def move(path, p, dir):
+    odir = 1 - dir
+    while path and path[-1] == dir:
         path = path[:-1]
     if not path:
         return None
     path = path[:-1]
-    path += (0,)
+    path += (dir,)
     while isinstance(idx(p, path), list):
-        path += (1,)
-    return path
-
-
-def right(path, p):
-    while path and path[-1] == 1:
-        path = path[:-1]
-    if not path:
-        return None
-    path = path[:-1]
-    path += (1,)
-    while isinstance(idx(p, path), list):
-        path += (0,)
+        path += (odir,)
     return path
 
 
 def explode(top, p, n, path):
     if isinstance(p, list) and n == 4:
-        l = left(path + (0,), top)
-        r = right(path + (1,) , top)
+        l = move(path + (0,), top, 0)
+        r = move(path + (1,), top, 1)
         x, y = p
         if l:
             write_idx(top, l, idx(top, l) + x)
         if r:
-            # print("RP", path + (1,), r)
-            # print("R", r, idx(top, r), y, idx(top, r) + y)
             write_idx(top, r, idx(top, r) + y)
 
         write_idx(top, path, 0)
@@ -64,6 +51,7 @@ def explode(top, p, n, path):
                 return True
 
     return False
+
 
 def split(top, p, path):
     if isinstance(p, int) and p >= 10:
@@ -79,6 +67,7 @@ def split(top, p, path):
 
     return False
 
+
 def reduce(n):
     n = copy.deepcopy(n)
     while True:
@@ -89,6 +78,7 @@ def reduce(n):
         break
     return n
 
+
 def magnitude(p):
     if isinstance(p, list):
         return 3*magnitude(p[0]) + 2*magnitude(p[1])
@@ -97,7 +87,6 @@ def magnitude(p):
 
 def main(args):
     data = [ast.literal_eval(s.strip()) for s in sys.stdin]
-
 
     n = data[0]
     for m in data[1:]:
@@ -110,8 +99,7 @@ def main(args):
         for j in range(len(data)):
             if i == j:
                 continue
-            n = [data[i], data[j]]
-            n = reduce(n)
+            n = reduce([data[i], data[j]])
             m = max(magnitude(n), m)
 
     print(m)
