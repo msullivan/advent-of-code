@@ -32,17 +32,17 @@ def match(rots, s1, s2):
     ss1 = set(s1)
     for o1 in s1:
         # print("OUT", o1)
-        # rs1 = recenter(o1, s1)
+        rs1 = set(recenter(o1, s1))
         for rot in rots:
             rs2 = [rotate(x, rot) for x in s2]
             for o2 in rs2:
-                p = vsub(o2, o1)
+                # p = vsub(o2, o1)
                 cnt = 0
                 for z in rs2:
-                    if vsub(z, p) in ss1:
+                    if vsub(z, o2) in rs1:
                         cnt += 1
                 if cnt >= 12:
-                    return o1, o2, rot, recenter(p, rs2)
+                    return o1, o2, rot, recenter(vsub(o2, o1), rs2)
 
                 # # print("IN", o1)
                 # rrs2 = recenter(vsub(o2, o1), rs2) # XXX
