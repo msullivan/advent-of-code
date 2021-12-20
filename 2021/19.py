@@ -7,18 +7,18 @@ def extract(s):
     return [int(x) for x in re.findall(r'(-?\d+).?', s)]
 
 def vsub(v1, v2):
-    return tuple(x - y for x, y in zip(v1, v2))
+    return (v1[0] - v2[0], v1[1] - v2[1], v1[2] - v2[2])
 
 def mdist(v1, v2):
-    return sum(abs(x - y) for x, y in zip(v1, v2))
+    return abs(v1[0] - v2[0]) + abs(v1[1] - v2[1]) + abs(v1[2] - v2[2])
 
 def crossp(a, b):
     a1, a2, a3 = a
     b1, b2, b3 = b
     return (a2*b3 - a3*b2, -(a1*b3 - a3*b1), a1*b2 - a2*b1)
 
-def dot(x, y):
-    return sum(a*b for a, b in zip(x, y))
+def dot(v1, v2):
+    return (v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2])
 
 def rotate(x, rot):
     # ... this is a matrix multiplication
