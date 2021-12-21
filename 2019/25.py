@@ -10,8 +10,6 @@ import re
 import pickle
 from itertools import chain, combinations
 
-def extract(s):
-    return [int(x) for x in re.findall(r'-?\d+', s)]
 
 def powerset(iterable):
     "powerset([1,2,3]) --> () (1,) (2,) (3,) (1,2) (1,3) (2,3) (1,2,3)"
@@ -35,8 +33,10 @@ def main(args):
 
     interp = IntCode(p)
 
+    i = 0
     if args[1:]:
-        with open(os.path.join("saves", args[1]), "rb") as f:
+        i = int(args[1]) + 1
+        with open(os.path.join("25.saves", args[1]), "rb") as f:
             interp = pickle.load(f)
 
     if args[2:] == ["-h"]:
@@ -52,12 +52,12 @@ def main(args):
             assert False
         print("Dropped", drop)
         interp = go
+        return
 
 
     # game
     out = interp.run([])
     print("".join([chr(x) for x in out]))
-    i = 0
     while True:
         inp = input()
         backup = copy.deepcopy(interp)
@@ -69,10 +69,6 @@ def main(args):
             print("RESTORING")
             interp = backup
         i += 1
-
-
-#    board = defaultdict(lambda: " ")
-
 
 
 
