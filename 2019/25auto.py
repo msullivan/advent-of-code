@@ -49,6 +49,10 @@ def explore(interp, map, item_rooms, room, msg):
         map[newroom][flip(dir)] = room
         if existed:
             print("===== SKIPPING", newroom, "FROM", room)
+
+        if 'Alert!' in out:
+            continue
+
         if not existed:
             explore(interp, map, item_rooms, newroom, out)
 
@@ -161,6 +165,11 @@ def main(args):
         print(step)
         print(run(interp, step))
 
+    checkpoint_dir = [
+        k for k, v in map["Security Checkpoint"].items()
+        if v == "Pressure-Sensitive Floor"
+    ][0]
+
     cnt = 0
     last = set(inv)
     for bin in range(1 << len(inv)):
@@ -172,7 +181,7 @@ def main(args):
         cmds = []
         cmds.extend(f'drop {x}' for x in last - cur)
         cmds.extend(f'take {x}' for x in cur - last)
-        cmds.append('west')
+        cmds.append(checkpoint_dir)
         cmd = '\n'.join(cmds)
 
         print(cmd)
@@ -185,7 +194,7 @@ def main(args):
     else:
         assert False
 
-    print("final items", cur)
+    print("final items", sorted(cur))
     print(f"tried {cnt} sets")
     print(extract(out_msg)[0])
 
