@@ -13,11 +13,6 @@ from itertools import chain, combinations
 def extract(s):
     return [int(x) for x in re.findall(r'-?\d+', s)]
 
-def powerset(iterable):
-    "powerset([1,2,3]) --> () (1,) (2,) (3,) (1,2) (1,3) (2,3) (1,2,3)"
-    s = list(iterable)
-    return chain.from_iterable(combinations(s, r) for r in range(len(s)+1))
-
 DIRS = ['north', 'south', 'east', 'west']
 def flip(s):
     return DIRS[DIRS.index(s) ^ 1]
@@ -76,6 +71,9 @@ def explore(interp, map, room, msg):
             print(out)
             print("ROLLING BACK")
             continue
+        # XXX: Is this better?
+        # interp.ip, interp.relative_base, interp.program = (
+        #     backup.ip, backup.relative_base, backup.program)
         run(interp, s)
 
 
@@ -116,16 +114,31 @@ def main(args):
         print(step)
         print(run(interp, step))
 
-    for drop in powerset(inv):
-        go = copy.deepcopy(interp)
-        cmd = "".join(["drop {}\n".format(x) for x in drop]) + "west"
-        out_msg = run(go, cmd)
+    cnt = 0
+    last = set(inv)
+    for bin in range(1 << len(inv)):
+        grey = bin ^ (bin >> 1)
+        cur = {inv[i] for i in range(len(inv)) if grey & (1 << i)}
+        # cur = set(cur)
+        cnt += 1
+
+        cmds = []
+        cmds.extend(f'drop {x}' for x in last - cur)
+        cmds.extend(f'take {x}' for x in cur - last)
+        cmds.append('west')
+        cmd = '\n'.join(cmds)
+
+        print(cmd)
+        out_msg = run(interp, cmd)
         print(out_msg)
         if "Alert!" not in out_msg:
             break
+
+        last = cur
     else:
         assert False
 
+    print("final items", cur)
     print(extract(out_msg)[0])
 
 
