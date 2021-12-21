@@ -7,8 +7,7 @@ import time
 from collections import defaultdict, deque
 from intcode import IntCode
 import re
-import pickle
-from itertools import chain, combinations
+from itertools import permutations
 
 def extract(s):
     return [int(x) for x in re.findall(r'-?\d+', s)]
@@ -27,7 +26,7 @@ def run(interp, s, max=None):
     return "".join([chr(x) for x in l])
 
 
-def explore(interp, map, room, msg):
+def explore(interp, map, item_rooms, room, msg):
     print("***", room)
     print(msg)
     lines = msg.split("\n")
@@ -51,7 +50,7 @@ def explore(interp, map, room, msg):
         if existed:
             print("===== SKIPPING", newroom, "FROM", room)
         if not existed:
-            explore(interp, map, newroom, out)
+            explore(interp, map, item_rooms, newroom, out)
 
         # go back
         out = run(interp, flip(dir))
@@ -75,6 +74,7 @@ def explore(interp, map, room, msg):
         # interp.ip, interp.relative_base, interp.program = (
         #     backup.ip, backup.relative_base, backup.program)
         run(interp, s)
+        item_rooms[item] = room
 
 
 def pathfind(cur, target, map, seen):
@@ -90,20 +90,67 @@ def pathfind(cur, target, map, seen):
     return None
 
 
+def multipath(path, map):
+    cur = path[0]
+    route = ()
+    for next in path[1:]:
+        route += pathfind(cur, next, map, set())
+        cur = next
+    return route
+
+
+def optidx(d, opt=max, nth=0):
+    if not isinstance(d, dict):
+        d = dict(enumerate(d))
+    rv = opt(d.values())
+    return [i for i, v in d.items() if v == rv][nth], rv
+
+
+def optimize(map, item_rooms, needed_items, start):
+    # TSP in a tree has got to be polynomial time,
+    # and even TSP on a graph shouldn't actually use permutations!
+    # But N is so small, it's no big deal.
+    target = "Security Checkpoint"
+    costs = {}
+    for perm in permutations(needed_items):
+        costs[perm] = len(multipath(
+            (start,) + tuple(item_rooms[item] for item in perm) + (target,),
+            map,
+        ))
+    print(costs)
+    perm, _ = optidx(costs, opt=min)
+    print(perm)
+
+    cmds = []
+    cur = start
+    for item in perm:
+        next = item_rooms[item]
+        cmds.extend(pathfind(cur, next, map, set()))
+        cmds.append(f"take {item}")
+        cur = next
+    cmds.extend(pathfind(cur, target, map, set()))
+    cmds.append("west")
+
+    print(cmds)
+
+
 def main(args):
-    data = [s.strip() for s in open("25.input")]
+    data = [s.strip() for s in sys.stdin]
     p = [int(x) for x in data[0].split(",")]
 
     interp = IntCode(p)
 
     # game
     map = defaultdict(dict)
+    item_rooms = {}
     out = run(interp, "")
     start_room = room_name(out)
-    explore(interp, map, start_room, out)
+    explore(interp, map, item_rooms, start_room, out)
 
+    # ... we get a faster ordering with inv...!
     inv = run(interp, "inv")
     inv = [s.replace('- ', '') for s in inv.split("\n") if s.startswith('- ')]
+    # inv = list(item_rooms.keys())
 
     print(inv)
     print(map)
@@ -139,7 +186,10 @@ def main(args):
         assert False
 
     print("final items", cur)
+    print(f"tried {cnt} sets")
     print(extract(out_msg)[0])
+
+    # optimize(map, item_rooms, cur, start_room)
 
 
 if __name__ == '__main__':
