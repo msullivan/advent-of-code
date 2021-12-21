@@ -32,46 +32,47 @@ def execute_intcode(p, ip, relative_base, input, output, max):
                 p.extend([0]*addr)
             p[addr] = v
 
-        if instr % 100 == 1:
+        opc = instr % 100
+        if opc == 1:
             write(3, read(1) + read(2))
             ip += 4
-        elif instr % 100 == 2:
+        elif opc == 2:
             write(3, read(1) * read(2))
             ip += 4
-        elif instr % 100 == 3:
+        elif opc == 3:
             if not input:
                 break
             write(1, input.pop(0))
             ip += 2
-        elif instr % 100 == 4:
+        elif opc == 4:
             output.append(read(1))
             ip += 2
-        elif instr % 100 == 5:
+        elif opc == 5:
             if read(1) != 0:
                 ip = read(2)
             else:
                 ip += 3
-        elif instr % 100 == 6:
+        elif opc == 6:
             if read(1) == 0:
                 ip = read(2)
             else:
                 ip += 3
-        elif instr % 100 == 7:
+        elif opc == 7:
             if read(1) < read(2):
                 write(3, 1)
             else:
                 write(3, 0)
             ip += 4
-        elif instr % 100 == 8:
+        elif opc == 8:
             if read(1) == read(2):
                 write(3, 1)
             else:
                 write(3, 0)
             ip += 4
-        elif instr % 100 == 9:
+        elif opc == 9:
             relative_base += read(1)
             ip += 2
-        elif instr % 100 == 99:
+        elif opc == 99:
             ip = -1
 
     return ip, relative_base, cnt
