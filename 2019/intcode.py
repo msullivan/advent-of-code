@@ -1,7 +1,12 @@
 import array
 
-def execute_intcode(p, ip, relative_base, input, output):
+def execute_intcode(p, ip, relative_base, input, output, max):
+    cnt = 0
     while ip >= 0:
+        if max and cnt > max:
+            break
+        cnt += 1
+
         instr = p[ip]
 
         def read(i):
@@ -69,7 +74,7 @@ def execute_intcode(p, ip, relative_base, input, output):
         elif instr % 100 == 99:
             ip = -1
 
-    return ip, relative_base
+    return ip, relative_base, cnt
 
 
 try:
@@ -86,18 +91,22 @@ class IntCode:
         self.relative_base = 0
         self.input = input or []
         self.output = output or []
+        self.spew = False
 
     @property
     def done(self):
         return self.ip == -1
 
-    def execute(self):
-        self.ip, self.relative_base = execute_intcode(
-            self.program, self.ip, self.relative_base, self.input, self.output
+    def execute(self, max=None):
+        max = 0 if max is None else max
+        self.ip, self.relative_base, cnt = execute_intcode(
+            self.program, self.ip, self.relative_base, self.input, self.output, max
         )
+        if max and cnt >= max:
+            raise ValueError('ran too long', cnt)
 
-    def run(self, input):
+    def run(self, input, max=None):
         self.input = input
         self.output = []
-        self.execute()
+        self.execute(max)
         return self.output

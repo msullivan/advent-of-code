@@ -63,12 +63,15 @@ static int64_t read_mem(int64_t *mem, ssize_t size, int64_t addr) {
 static int
 _execute_intcode(PyObject *program,
                  int64_t *p_ip, int64_t *p_relative_base,
-                 PyObject *input, PyObject *output)
+                 PyObject *input, PyObject *output,
+                 int64_t *p_max_instrs)
 {
     ssize_t size = Py_SIZE(program);
     int64_t *mem = _get_array(program);
     int64_t ip = *p_ip;
     int64_t relative_base = *p_relative_base;
+    int64_t cnt = 0;
+    int64_t max_instrs = *p_max_instrs;
     int res;
     PyObject *obj;
 
@@ -77,6 +80,7 @@ _execute_intcode(PyObject *program,
             if (grow_array(program, ip + 4, &size, &mem) < 0)
                 return -1;
         }
+        if (max_instrs && cnt++ > max_instrs) break;
 
         int64_t instr = mem[ip];
 
@@ -145,6 +149,7 @@ out:
 
     *p_ip = ip;
     *p_relative_base = relative_base;
+    *p_max_instrs = cnt;
 
     return 0;
 }
@@ -153,16 +158,17 @@ static PyObject *
 execute_intcode(PyObject *self, PyObject *args)
 {
     PyObject *program, *input, *output;
-    int64_t ip, relative_base;
+    int64_t ip, relative_base, max_instrs;
 
-    if (!PyArg_ParseTuple(args, "OLLOO", &program, &ip, &relative_base, &input, &output))
+    if (!PyArg_ParseTuple(
+            args, "OLLOOL", &program, &ip, &relative_base, &input, &output, &max_instrs))
         return NULL;
 
-    int res = _execute_intcode(program, &ip, &relative_base, input, output);
+    int res = _execute_intcode(program, &ip, &relative_base, input, output, &max_instrs);
     if (res < 0)
         return NULL;
 
-    return Py_BuildValue("ii", ip, relative_base);
+    return Py_BuildValue("iii", ip, relative_base, max_instrs);
 }
 
 static PyMethodDef _intcode_methods[] = {
