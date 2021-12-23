@@ -13,7 +13,6 @@ def vadd(v1, v2):
 
 UP, RIGHT, DOWN, LEFT = VDIRS = (0, -1), (1, 0), (0, 1), (-1, 0),
 
-####
 
 def draw(painted):
     minx = min(x for x, y in painted)
@@ -31,14 +30,10 @@ def draw(painted):
 
 def draw2(package, state):
     orig_map = package[-1]
-    d, tomove = fromkey(state)
+    d, tomove = state
     m = orig_map.copy()
 
-    if d['C'] == {(5,2),(5,3)}:
-        breakpoint()
-
-
-    for kind, poses in d.items():
+    for kind, poses in d:
         for pos in poses:
             m[pos] = kind
     draw(m)
@@ -57,7 +52,7 @@ def dijkstra(m, edges, start, heuristic=None, target=None):
         if k != cost[cur]:
             continue
         explored += 1
-        if explored % 1000 == 0:
+        if explored % 10000 == 0:
             print("explored", explored)
             draw2(m, cur)
             print(cost[cur])
@@ -87,9 +82,9 @@ def dijkstra(m, edges, start, heuristic=None, target=None):
 
 ##############################
 
-ROOMS = None
-
 costs = {'A': 1, 'B': 10, 'C': 100, 'D': 1000}
+target_cols = {'A': 3, 'B': 5, 'C': 7, 'D': 9}
+target_col_set = set(target_cols.values())
 
 def fromkey(d):
     d, x = d
@@ -97,7 +92,6 @@ def fromkey(d):
 def tokey(d, x):
     return tuple(sorted((k, frozenset(v)) for k, v in d.items())), x
 
-target_cols = {'A': 3, 'B': 5, 'C': 7, 'D': 9}
 
 def heuristic(state):
     c = 0
@@ -106,34 +100,41 @@ def heuristic(state):
             c += abs(target_cols[kind] - pos[0]) * costs[kind]
             if pos[1] == 1:
                 c += costs[kind]
+            # XXX
     return c
+
+
+def upd(t, i, x):
+    t = list(t)
+    t[i] = x
+    return tuple(t)
 
 def edges(z, state):
     HALLWAY = 1
     hallway, rooms, above, targets, _ = z
 
     all = hallway|rooms
-    d, tomove = fromkey(state)
-    allposes = {x for s in d.values() for x in s}
+    locs, tomove =  state
+    allposes = {x for _, s in locs for x in s}
 
     if tomove:
         (tm_k, tm_pos, tm_stopped) = tomove
-        others = {x for k, p in d.items() if k != tm_k for x in p}  # perf??
-        tm_occupado = (others & targets[tm_k])
 
         # stop the dude
         if not tm_stopped:
-            if tm_pos[0] not in {3,5,7,9} or tm_pos in targets[tm_k]:
+            if tm_pos[0] not in target_col_set or tm_pos in targets[tm_k]:
                 yield (state[0], ()), 0
         if tm_pos in targets[tm_k]:
+            others = {x for k, p in locs if k != tm_k for x in p}  # perf??
+            tm_occupado = (others & targets[tm_k])
             if not tm_occupado:
-                yield tokey(d, ()), 0
+                yield (locs, ()), 0
 
     else:
-        for kind, poses in d.items():
+        for kind, poses in locs:
             for pos in poses:
                 occupado = (
-                    {x for k, p in d.items() if k != kind for x in p} & targets[kind])
+                    {x for k, p in locs if k != kind for x in p} & targets[kind])
                 if (pos not in targets[kind]) or occupado:
                     if pos in hallway:
                         if occupado:
@@ -160,12 +161,15 @@ def edges(z, state):
         if nbr[1] > tm_pos[1]:
             if nbr[0] != target_cols[tm_k]:
                 continue
+            others = {x for k, p in locs if k != tm_k for x in p}  # perf??
+            tm_occupado = (others & targets[tm_k])
             if tm_occupado:
                 continue
 
-        nd = d.copy()
-        nd[tm_k] = nd[tm_k] - {tm_pos} | {nbr}
-        yield tokey(nd, (tm_k, nbr, tm_stopped)), costs[tm_k]
+        idx = "ABCD".index(tm_k)
+        npos = locs[idx][1] - {tm_pos} | {nbr}
+        nlocs = upd(locs, idx, (tm_k, npos))
+        yield (nlocs, (tm_k, nbr, tm_stopped)), costs[tm_k]
 
 EXTRA = '''\
   #D#C#B#A#
@@ -182,11 +186,8 @@ def main(args):
     if PART2:
         data[3:3] = EXTRA
 
-
     m = {(x, y): v for y, l in enumerate(data) for x, v in enumerate(l) if v != "\n"}
     blank_map = {k: v if not v.isalpha() else " " for k, v in m.items()}
-
-    print(m)
 
     hallway = {(x, 1) for x in range(1, 12)}
 
@@ -195,8 +196,6 @@ def main(args):
         for noob in 'ABCD'
     }
 
-    print(hallway)
-    print("NOOBS", noobs)
     targets = {
         k: {(target_cols[k], i) for i in range(2,3+2*PART2+1)}
         for k in 'ABCD'
