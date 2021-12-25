@@ -9,6 +9,9 @@ import sys
 import z3
 
 
+def test(x, b):
+    return isinstance(x, int) and x == b
+
 def eval(cmds, regs, inp):
     def r2(x):
         if x.isalpha():
@@ -24,14 +27,17 @@ def eval(cmds, regs, inp):
         a, b = rest
 
         if x == 'add':
-            regs[a] = regs[a] + r2(b)
+            if not test(r2(b), 0):
+                regs[a] = regs[a] + r2(b)
         elif x == 'mul':
-            if b == '0':
+            if test(r2(b), 0):
                 regs[a] = 0
             else:
-                regs[a] = regs[a] * r2(b)
+                if not test(r2(b), 1):
+                    regs[a] = regs[a] * r2(b)
         elif x == 'div':
-            regs[a] = regs[a] / r2(b)
+            if not test(r2(b), 1):
+                regs[a] = regs[a] / r2(b)
         elif x == 'mod':
             regs[a] = regs[a] % r2(b)
         elif x == 'eql':
