@@ -38,9 +38,9 @@ def turn(v, d='left'):
 ##############################
 
 def main(args):
-    # data = [x.strip().split('\n') for x in sys.stdin.read().split('\n\n')]
-    # data = [int(s.strip()) for s in sys.stdin]
-    data = [s.strip() for s in sys.stdin]
+    # data = [x.rstrip('\n').split('\n') for x in sys.stdin.read().split('\n\n')]
+    # data = [int(s.rstrip('\n')) for s in sys.stdin]
+    data = [s.rstrip('\n') for s in sys.stdin]
 
     print(data)
 
