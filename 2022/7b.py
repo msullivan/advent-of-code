@@ -45,7 +45,7 @@ def main(args):
     # Part 2
     avail = 70000000 - dsizes[()]
     need = 30000000 - avail
-    print(min(x for x in dsizes.values() if x > need))
+    print(min(x for x in dsizes.values() if x >= need))
 
 
 
