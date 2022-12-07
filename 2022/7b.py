@@ -3,23 +3,12 @@
 import sys
 
 def main(args):
-    data = [s.rstrip('\n') for s in sys.stdin]
-
-    cmds = []
-    i = 0
-    while i < len(data):
-        s = data[i]
-        i += 1
-        ls = []
-        while i < len(data) and not data[i][0] == '$':
-            ls.append(data[i])
-            i += 1
-        cmds.append((s[2:], ls))
+    data = [x.rstrip('\n').split('\n') for x in sys.stdin.read().split('$ ')][1:]
 
     tree = {}
     sizes = {}
     cur = ()
-    for cmd, out in cmds:
+    for cmd, *out in data:
         if cmd.startswith('cd'):
             x, arg = cmd.split(' ')
             if arg == '/':
