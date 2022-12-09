@@ -15,8 +15,7 @@ def move(head, tail):
     hx, hy = head
     tx, ty = tail
 
-    dist = abs(hy-ty) + abs(hx-tx)
-    if (dist == 2 and (hx == tx or hy == ty)) or dist > 2:
+    if abs(hy-ty) > 1 or abs(hx-tx) > 1:
         mx = sign(hx-tx)
         my = sign(hy-ty)
         tail = vadd(tail, (mx, my))
