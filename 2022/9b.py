@@ -8,21 +8,17 @@ def vadd(v1, v2):
 UP, RIGHT, DOWN, LEFT = VDIRS = (0, -1), (1, 0), (0, 1), (-1, 0),
 DIRS = {'U': UP, 'R': RIGHT, 'D': DOWN, 'L': LEFT }
 
-def move(nhead, tail):
-    hx, hy = nhead
+def sign(n):
+    return -1 if n < 0 else 1 if n > 0 else 0
+
+def move(head, tail):
+    hx, hy = head
     tx, ty = tail
-    # I started by cases... and then decided to be general? idk
-    if hx == tx and hy + 2 == ty:
-        tail = (hx, hy+1)
-    elif hx == tx and hy - 2 == ty:
-        tail = (hx, hy-1)
-    elif hy == ty and hx - 2 == tx:
-        tail = (hx-1, hy)
-    elif hy == ty and hx + 2 == tx:
-        tail = (hx+1, hy)
-    elif abs(hy-ty) + abs(hx-tx) > 2:
-        mx = (hx-tx)//abs(hx-tx)
-        my = (hy-ty)//abs(hy-ty)
+
+    dist = abs(hy-ty) + abs(hx-tx)
+    if (dist == 2 and (hx == tx or hy == ty)) or dist > 2:
+        mx = sign(hx-tx)
+        my = sign(hy-ty)
         tail = vadd(tail, (mx, my))
 
     return tail
