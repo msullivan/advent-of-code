@@ -52,31 +52,16 @@ def dijkstra(m, edges, start, heuristic=None, target=None):
         if k != cost[cur]:
             continue
         explored += 1
-        if explored % 10000 == 0:
-            print("explored", explored)
-            draw2(m, cur)
-            print(cost[cur])
-            print()
 
-        # print("AT")
-        # draw2(m, cur)
-        # print()
         nbrs = list(edges(m, cur))
         for nbr, weight in nbrs:
-
             ncost = cost[cur] + weight
             if nbr not in cost or ncost < cost[nbr]:
-                # print("EXPLORING")
-                # print(draw2(m, nbr))
-                # print()
-
                 cost[nbr] = ncost
                 path[nbr] = cur
                 hcost = ncost if not heuristic else ncost + heuristic(nbr)
                 heapq.heappush(todo, (hcost, ncost, nbr))
-        # print("-----------------\n")
 
-    print("TOTAL EXPLORED", explored)
     return cost, path
 
 
