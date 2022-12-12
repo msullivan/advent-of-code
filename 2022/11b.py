@@ -30,9 +30,8 @@ def main(args):
             while items:
                 item = items.popleft()
                 mcounts[j] += 1
-                op2 = op.replace('old', str(item))
                 # XXX: DON'T DO THIS AT HOME!
-                new = new2 = eval(op2)
+                new = eval(op, None, dict(old=item))
                 new2 = new % asdf
                 if new2 % test == 0:
                     idx = true
