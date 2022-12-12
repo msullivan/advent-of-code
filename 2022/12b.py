@@ -24,29 +24,21 @@ def main(args):
             x = data[r][c]
             m[r,c] = 0 if x == 'S' else 25 if x == 'E' else iord(x)
 
-    val = 1000000000000000
+    wl = deque([(end, 0)])
+    seen = set()
+    while wl:
+        node, dist = wl.popleft()
+        if node in seen:
+            continue
+        seen.add(node)
+        if m[node] == 0:
+            break
+        for dir in VDIRS:
+            nbr = vadd(dir, node)
+            if nbr in m and m[node] <= m[nbr]+1:
+                wl.append((nbr, dist+1))
 
-    for sp in m:
-        if m[sp] != 0: continue
-
-        wl = deque([(sp, 0)])
-        seen = set()
-        while wl:
-            node, dist = wl.popleft()
-            if node in seen:
-                continue
-            seen.add(node)
-            if node == end:
-                val = min(val, dist)
-                break
-            for dir in VDIRS:
-                nbr = vadd(dir, node)
-                if nbr in m and m[nbr] <= m[node]+1:
-                    wl.append((nbr, dist+1))
-
-        print(dist, val)
-
-    print(val)
+    print(dist)
 
 if __name__ == '__main__':
     main(sys.argv)
