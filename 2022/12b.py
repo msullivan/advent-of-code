@@ -31,21 +31,19 @@ def main(args):
 
         wl = deque([(sp, 0)])
         seen = set()
-        gotit = 10000000000000000
         while wl:
             node, dist = wl.popleft()
             if node in seen:
                 continue
             seen.add(node)
             if node == end:
-                gotit = dist
+                val = min(val, dist)
                 break
             for dir in VDIRS:
                 nbr = vadd(dir, node)
                 if nbr in m and m[nbr] <= m[node]+1:
                     wl.append((nbr, dist+1))
 
-        val = min(val, gotit)
         print(dist, val)
 
     print(val)
