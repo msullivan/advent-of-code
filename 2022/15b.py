@@ -1,13 +1,22 @@
 #!/usr/bin/env python3
 
-"""
+"""Day 15.
 
-I basically just copied my "honest" solution from 2018/23 and reversed it.
+For the original solution, I basically just copied my "honest"
+solution from 2018/23 and reversed it.
 
 I'm not sure why I didn't start by basically doing my "dishonest" Z3
 trick from 2018, which got me second place. Very frustrating.
 
+This version is cleaned up from that: this version isn't an
+optimization problem--we know the goal is to find a point with zero
+overlaps, so the heap/ordering machinery from there isn't useful.
 
+The algorithm then is: maintain a stack of bounding boxes that might
+contain the correct point. Iteratively take the top bounding box,
+split it into 4 subboxes, and keep all the subboxes that might also
+contain the correct point. If we find such a box that is actually just
+a point, we are done.
 """
 
 from __future__ import annotations
@@ -15,26 +24,15 @@ from __future__ import annotations
 import sys
 from dataclasses import dataclass
 from typing import NamedTuple
-import random
-import heapq
 import re
 
-def extract(s):
+
+def extract(s: str) -> list[int]:
     return [int(x) for x in re.findall(r'(-?\d+).?', s)]
 
-def vadd(v1, v2):
-    return tuple(x + y for x, y in zip(v1, v2))
-
-def vsub(v1, v2):
-    return (v1[0]-v2[0], v1[1]-v2[1])
-
-def mag(v):
-    return abs(v[0]) + abs(v[1])
 
 def furthest(lo: int, hi: int, val: int) -> int:
-    lod = abs(lo - val)
-    hid = abs(hi - val)
-    return lo if lod >= hid else hi
+    return lo if abs(lo - val) >= abs(hi - val) else hi
 
 
 class Pos(NamedTuple):
@@ -60,7 +58,7 @@ class Box:
     def is_valid(self) -> bool:
         return all(b <= t for b, t in zip(self.bot, self.top))
 
-    def split(self) -> Set[Box]:
+    def split(self) -> set[Box]:
         """Split a box into 4 sub boxes"""
         mid = Pos(*[(c1 + c2) // 2 for c1, c2 in zip(self.bot, self.top)])
         mid1 = Pos(*[c+1 for c in mid])
@@ -69,11 +67,11 @@ class Box:
             Box(Pos(oxl.x, oyl.y), Pos(oxh.x, oyh.y))
             for oxl, oxh in opts
             for oyl, oyh in opts
-        ) if x.is_valid()} - {self}
+        ) if x.is_valid()}
 
 
 @dataclass(frozen=True)
-class Bot:
+class Sensor:
     r: int
     p: Pos
 
@@ -84,58 +82,31 @@ class Bot:
         return self.contains(box.furthest_from(self.p))
 
 
-def key(box: Box, bots: List[Bot]) -> Tuple[int, int, float, Box]:
-    """Compute the key for the priority queue.
-
-    The key is (number of bots in range of box, closest distance, the box).
-    Number of bots is negative so the min-heap picks the largest.
-
-    We actually stick a random number in the 3rd spot, to ensure that
-    we don't need to compare boxes.
-    """
-    overlapping = sum(bot.overlaps_box(box) for bot in bots)
-    closest = 0
-    return (overlapping, closest, random.random(), box)
-
-
-
-def main(args):
+def main(args: list[str]) -> None:
     file = open(args[1]) if len(args) > 1 else sys.stdin
     data = [extract(s) for s in file]
 
-    xmin = 1000000000000000000
-    xmax = -100000000000000000
-    maxsz = 0
     spots = []
-    beacs = set()
     for line in data:
         a, b, c, d = line
-        xmin = min(xmin, a)
-        xmax = max(xmax, b)
-        p1, p2 = (a, b), (c, d)
-        beacs.add(p2)
-        sz = mag(vsub(p2, p1))
-        print(sz)
-        maxsz = max(sz, maxsz)
-        spots.append(Bot(sz, Pos(*p1)))
+        p1, p2 = Pos(a, b), Pos(c, d)
+        spots.append(Sensor(p1.dist(p2), Pos(*p1)))
 
-    orig_box = Box(Pos(0, 0), Pos(4000000, 4000000))
+    MAX = 4000000
+    orig_box = Box(Pos(0, 0), Pos(MAX, MAX))
 
-    heap = [key(orig_box, spots)]
-
+    stack = [orig_box]
     while True:
-        # Select the box with the best potential solution.
-        overlapping, dist, _, box = heapq.heappop(heap)
-        print(box, overlapping, box.bot.dist(box.top), dist, len(heap))
-        # When the box has been shrunk to a point, then the upper
-        # bound must be tight and this must be the optimal
-        # place. (Because the heap ensures we work in order.)
+        box = stack.pop()
+        # When the box has been shrunk to a point, then we've
+        # found it.
         if box.bot == box.top:
             break
-
-        # Otherwise split the box up and keep looking.
+        # Split up the box
         for sbox in box.split():
-            heapq.heappush(heap, key(sbox, spots))
+            overlapping = sum(bot.overlaps_box(sbox) for bot in spots)
+            if overlapping == 0:
+                stack.append(sbox)
 
     print(box.bot, box.top)
     print(box.bot.x * 4000000 + box.bot.y)
