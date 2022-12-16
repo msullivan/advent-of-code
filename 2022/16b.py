@@ -1,154 +1,76 @@
 #!/usr/bin/env python3
 
+import os
 import sys
-from collections import defaultdict, Counter, deque
-from parse import parse
+from collections import deque
 import re
-import math
+from itertools import chain, combinations
+import functools
 
 def extract(s):
     return [int(x) for x in re.findall(r'(-?\d+).?', s)]
 
-def vadd(v1, v2):
-    return tuple(x + y for x, y in zip(v1, v2))
-
-def ichr(i):
-    return chr(ord('a') + i)
-
-def iord(c):
-    return ord(c.lower()) - ord('a')
-
-def optidx(d, opt=max, nth=0):
-    if not isinstance(d, dict):
-        d = dict(enumerate(d))
-    rv = opt(d.values())
-    return [i for i, v in d.items() if v == rv][nth], rv
-
-LETTERS = "abcdefghijklmnopqrstuvwxyz"
-
-UP, RIGHT, DOWN, LEFT = VDIRS = (0, -1), (1, 0), (0, 1), (-1, 0),
-DIRS = {'N': UP, 'E': RIGHT, 'S': DOWN, 'W': LEFT }
-ALL_DIRS = [(x, y) for x in [-1,0,1] for y in [-1,0,1] if not x == y == 0]
-
-def turn(v, d='left'):
-    n = -1 if d == 'left' else 1
-    return VDIRS[(VDIRS.index(v) + n + len(VDIRS))%len(VDIRS)]
+def powerset(iterable):
+    "powerset([1,2,3]) --> () (1,) (2,) (3,) (1,2) (1,3) (2,3) (1,2,3)"
+    s = list(iterable)
+    return chain.from_iterable(combinations(s, r) for r in range(len(s)+1))
 
 
-##############################
+# This is a big memory use optimization for frozensets
+@functools.lru_cache(None)
+def canonicalize(x):
+    return x
 
-# state is (valves on, time left, position)
+MAX = 26
+# MAX = 30
 
+def next_states1(shortest, rates, state):
+    pos, avail, time = state
 
-
-def score_step(m, rates, state):
-    pos, _, open, time = state
-    return sum(rates[x] for x in open)
-
-def next_states(shortest, rates, state):
-    (pos1, t1), (pos2, t2), open, time = state
-    if time == 26:
+    if time == MAX:
         return []
 
-    next = []
-    if pos1 == 'done':
-        t1opts = []
-    elif t1 == 0:
-        open |= frozenset([pos1])
-        t1opts = [(pos1, -1)]
-    elif t1 > 0:
-        t1opts = [(pos1, t1 - 1)]
-    else:
-        # PICK
-        t1opts = [
-            (p, s)
-            for p in rates.keys() - open
-            if time+(s := (shortest[pos1, p]-1)) < 25
-        ]
+    avail = canonicalize(avail - {pos})
 
-    if pos2 == 'done':
-        t2opts = []
-    elif t2 == 0:
-        open |= frozenset([pos2])
-        t2opts = [(pos2, -1)]
-    elif t2 > 0:
-        t2opts = [(pos2, t2 - 1)]
-    else:
-        # PICK
-        t2opts = [
-            (p, s)
-            for p in rates.keys() - open
-            if time+(s := (shortest[pos2, p]-1)) < 25
-        ]
+    nexts = []
+    for p in avail:
+        s = shortest[pos, p] + 1
+        if time + s < MAX:
+            nexts.append((p, avail, time+s))
 
-    # t2opts.append(('done', 0))
-    if len(t1opts) == len(t2opts) == 1 and t1opts[0][0] == t2opts[0][0]:
-        t1opts.append(('done', 0))
-        t2opts.append(('done', 0))
+    return nexts
 
-    if not t1opts:
-        t1opts = [('done', 0)]
-    if not t2opts:
-        t2opts = [('done', 0)]
-
-    next = []
-    for t1o in t1opts:
-        for t2o in t2opts:
-            # print('?', t1o, t2o)
-            if t1o[0] != t2o[0] or t1o[0] == 'done':
-                next.append((t1o, t2o, open, time+1))
-
-    next2 = set()
-    for a, b, c, d in next:
-        a, b = sorted([a, b])
-        next2.add((a, b, c, d))
-
-    return list(next2)
-
-
-# WA: 2452 too low, 2459 too low
 ROUTE = {}
 CACHE = {}
-ASDF = 0
-PRUNES = 0
 HIT = 0
 GOS = 0
-def optimize(shortest, rates, state, prune=0):
+def optimize(shortest, rates, state):
     global PRUNES, HIT, GOS
-    GOS += 1
-    # ours = score_step(shortest, rates, state)
-    # if prune > ASDF*(27-state[-1]):
-    #     print("PRUNE", state, prune, ASDF*(27-state[-1]), state[-1], ours)
-    #     PRUNES += 1
-    #     return 0
     if state in CACHE:
         # print("HIT", state, CACHE[state])
         HIT += 1
         return CACHE[state]
-    pos, pos2, open, time = state
+    pos, avail, time = state
 
-    ours = score_step(shortest, rates, state)
-    nexts = next_states(shortest, rates, state)
+    nexts = next_states1(shortest, rates, state)
 
-    # best = max(0, prune-ours)
-    best = ours
+    ours = rates[pos] * (MAX-time) if pos in rates else 0
     opts = []
     for st in nexts:
-        val = optimize(shortest, rates, st, prune=best) + ours * (st[-1]-time)
+        val = optimize(shortest, rates, st) + ours
         opts.append(val)
-        best = max(best, val)
 
-    score = best
+    score = max(opts, default=ours)
 
     # if opts:
     #     which = nexts[opts.index(best)]
     #     print("BEST OPTION FROM", state, which, best)
     #     ROUTE[state] = (which, score, score-best)
     # print(state, score)
+    GOS += 1
     if GOS % 10000 == 0:
-        print(GOS, len(CACHE), PRUNES, HIT, state)
-    if time <= 23:
-        CACHE[state] = score
+        print(GOS, len(CACHE), HIT, state)
+    CACHE[state] = score
     return score
 
 
@@ -185,18 +107,31 @@ def main(args):
 
     short = shortest_paths(map)
 
-    starting = (('AA', -1), ('AA', -1), frozenset(), 1)
-
-    print('MAX', sum(rates.values()))
-    global ASDF
-    ASDF = sum(rates.values())
     print('num real valves', len(rates))
 
+    # We could handle this case but do not
+    assert 'AA' not in rates
 
-    score = optimize(short, rates, starting)
-    print()
-    n = starting
-    i = 1
+    # Compute the best answer for the powerset of everything
+    # (they will share a lot of cache hits)
+    powers = [frozenset(s) for s in powerset(rates.keys())]
+    bests = {}
+    for s in powers:
+        print('=============', s)
+        bests[s] = optimize(short, rates, ('AA', s, 0))
+
+    score = 0
+    best = None
+    for s in powers:
+        other = frozenset(rates.keys() - s)
+        sscore = bests[s] + bests[other]
+        score = max(score, sscore)
+        if score == sscore:
+            best = (s, other)
+
+    # print()
+    # n = starting
+    # i = 1
     # while True:
     #     print(i, n, ROUTE[n][-1] if n in ROUTE else -1)
     #     if n not in ROUTE:
@@ -205,7 +140,10 @@ def main(args):
     #     i += 1
 
     print(len(CACHE))
+    print(best)
     print(score)
+
+    os._exit(0)  # ... this is like a 5 second speedup
 
 if __name__ == '__main__':
     main(sys.argv)
