@@ -66,8 +66,6 @@ def next_states(shortest, rates, state):
             if time+(s := (shortest[pos1, p]-1)) < 25
         ]
 
-    # t1opts.append(('done', 0))
-
     if pos2 == 'done':
         t2opts = []
     elif t2 == 0:
@@ -93,39 +91,13 @@ def next_states(shortest, rates, state):
     if not t2opts:
         t2opts = [('done', 0)]
 
-    # if not t2opts or len(t2opts:
-    #     t2opts = [('done', 0)]
-
     next = []
     for t1o in t1opts:
         for t2o in t2opts:
             # print('?', t1o, t2o)
             if t1o[0] != t2o[0] or t1o[0] == 'done':
                 next.append((t1o, t2o, open, time+1))
-                # if t1o[1] > 0 and t2o[1] > 0 and time + (k := min(t1o[1], t2o[1])) < 26:
 
-                #     next.append(((t1o[0],t1o[1]-k), (t2o[0], t2o[1]-k), open, time+k))
-                # else:
-                #     next.append((t1o, t2o, open, time+1))
-
-
-    # for nbr in m[pos]:
-    #     for nbr2 in m[pos2]:
-    #         next.append((nbr, nbr2, open, time+1))
-    #     if rates[pos2] != 0:
-    #         next.append((nbr, pos2, open|frozenset([pos2]), time+1))
-    # if rates[pos] != 0:
-    #     for nbr2 in m[pos2]:
-    #         next.append((pos, nbr2, open|frozenset([pos]), time+1))
-    #     if rates[pos2] != 0:
-    #         next.append((pos, pos2, open|frozenset([pos, pos2]), time+1))
-
-    # print(state, '->', next)
-
-    # if not next:
-    #     breakpoint()
-
-    # return next
     next2 = set()
     for a, b, c, d in next:
         a, b = sorted([a, b])
@@ -154,9 +126,6 @@ def optimize(shortest, rates, state, prune=0):
         HIT += 1
         return CACHE[state]
     pos, pos2, open, time = state
-    # if time == 0:
-    #     return 0  # ??
-
 
     ours = score_step(shortest, rates, state)
     nexts = next_states(shortest, rates, state)
@@ -201,8 +170,6 @@ def shortest_paths(m):
 
 def main(args):
     file = open(args[1]) if len(args) > 1 else sys.stdin
-    # data = [x.rstrip('\n').split('\n') for x in file.read().split('\n\n')]
-    # data = [int(s.rstrip('\n')) for s in file]
     data = [s.rstrip('\n') for s in file]
 
 
@@ -211,7 +178,6 @@ def main(args):
     for line in data:
         x = line.split(' ')[1]
         rate = extract(line)[0]
-        # print(line.replace('valve', 'valves').split('valves '))
         rest = line.replace('valves', 'valve').split('valve ')[1].split(', ')
         if rate:
             rates[x] = rate
@@ -221,12 +187,10 @@ def main(args):
 
     starting = (('AA', -1), ('AA', -1), frozenset(), 1)
 
-    # print(rates)
-    # print(map)
-
     print('MAX', sum(rates.values()))
     global ASDF
     ASDF = sum(rates.values())
+    print('num real valves', len(rates))
 
 
     score = optimize(short, rates, starting)
