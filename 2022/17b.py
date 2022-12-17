@@ -30,7 +30,6 @@ ROCKS = '''\
 
 
 ROCKS = [r.split('\n') for r in ROCKS.strip().split('\n\n')]
-print(ROCKS)
 
 ROCKS2 = []
 for r in ROCKS:
@@ -41,9 +40,7 @@ for r in ROCKS:
                 sqs.append((x, y))
     ROCKS2.append(tuple(sqs))
 
-OROCKS = ROCKS
 ROCKS = ROCKS2
-print(ROCKS)
 
 def out(grid, rock):
     for p in rock:
@@ -80,13 +77,11 @@ def main(args):
 
     seen = {}
 
-    scores = {}
     top = -1
-    no = 0
     i = 0
     stopat = -1
-    # for rnum in range(2022):
-    for rnum in range(100000):
+    rnum = 0
+    while True:
         rock = ROCKS[rnum % len(ROCKS)]
 
         origin = (2, top + 4)
@@ -109,17 +104,24 @@ def main(args):
             grid[p] = '#'
             top = max(top, p[1])
 
-        if rnum < 100:
-            continue
 
+        # print(rnum, top+1)
+        # Part 1!
+        if rnum == 2022 - 1:
+            print(top+1)
+
+        # Part 2
+
+        # Take a snapshot of the top 50 rows and use it to look for repeats.
+        # I think this isn't technically sound, and you really ought to also
+        # make sure there is no path from top to bottom, or something.
         snapshot = "\n".join([
             "".join(grid[c, r] for c in range(7))
-            for r in range(top, top-1000, -1)
+            for r in range(top, top-50, -1)
         ])
-        # print(list(range(top, top-10, -1)))
-        print(snapshot)
-        # print(grid)
-        if (snapshot, i % len(data)) in seen and not no:
+        # If we've seen a repeat for the first time, compute a bunch of info
+        # about the loop, then run a bit more to figure out the remainder.
+        if rnum > 2022 and (snapshot, i % len(data)) in seen and stopat == -1:
             last, lastheight = seen[(snapshot, i % len(data))]
             startheight = top+1
             togo = (1000000000000-1)-rnum
@@ -128,19 +130,16 @@ def main(args):
             remainder = togo % looplen
             loopsize = startheight - lastheight
 
-            no = 1
             stopat = rnum + remainder
 
         if rnum == stopat:
-            growth = top+1 - startheight
             answer = top+1 + loops*loopsize
             print(answer)
             break
 
         seen[snapshot, i % len(data)] = (rnum, top+1)
 
-        scores[rnum] = top + 1
-        print(rnum, top+1)
+        rnum += 1
 
 
 if __name__ == '__main__':
