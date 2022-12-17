@@ -1,7 +1,32 @@
 #!/usr/bin/env python3
 
-# An alternate solve of 16 part 2 based on decomposing and
-# exponentiating permutations
+"""
+An alternate solve of 16 part 2 based on decomposing and
+exponentiating permutations.
+
+The insight here is that Spin and Exchange are permutations and can be
+reordered at will and that Partner, while not a permutation on the
+order of the dancers, commutes with the permutation also (it's just a
+relabelling of the elements).
+
+This means that we can split up the problem, and do all of the
+Spin/Exchange operations and then all of the Partner operations.
+
+Moreover, Partner *is* actually a permutation on the "index sequence".
+If we define the index sequence of a sequence of dancers to be:
+  for each letter, in order, the index of that letter in the dancer sequence
+then Partner just swaps the indexes at its two letters.
+
+Thus, we can decompose the dance instructions into:
+ * A permutation of the values defined by the S and X operations
+ * A permutation of the indexes defined by the P operations
+
+These permutations can be represented as sequences of ints, and
+applied to other sequences. Applying a permutation to a another
+permutation computes a composition. We can then compose it a billion
+times by using exponentiation by squaring.
+
+"""
 
 import sys
 
