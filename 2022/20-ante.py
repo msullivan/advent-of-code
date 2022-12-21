@@ -14,7 +14,7 @@ def node_height(nobe: Optional[Node]) -> int:
 def node_size(nobe: Optional[Node]) -> int:
     return nobe.size if nobe else 0
 
-@dataclass
+@dataclass(slots=True)
 class Node:
     _parent: Optional[Node] = None
     pdir: Dir = -1
@@ -43,11 +43,13 @@ class Node:
         return self.children[RIGHT]
 
     def set_child(self, dir: Dir, child: Optional[Node]) -> None:
+        # assert child is not self
         self.children[dir] = child
         if child:
             child.parent = self
             child.pdir = dir
-        self.update()
+        # assert self.left is not self.right
+        # self.update()
 
     def update(self) -> None:
         self.height = max(node_height(self.left), node_height(self.right)) + 1
@@ -63,7 +65,9 @@ def rotate(node: Node, dir: Dir) -> Node:
     replacement = node.children[odir]
     assert replacement
     node.set_child(odir, replacement.children[dir])
+    node.update()
     replacement.set_child(dir, node)
+    replacement.update()
     return replacement
 
 
@@ -110,10 +114,14 @@ def chain_repair(node: Node) -> None:
 
 
 def insert_after(existing: Node, new: Node) -> None:
+    new.children[0] = new.children[1] = None
+
     if existing.right is None:
         existing.set_child(RIGHT, new)
         chain_repair(new)
         return
+
+    existing = existing.right
 
     while existing.left is not None:
         existing = existing.left
@@ -183,6 +191,8 @@ def delete(node: Node) -> None:
     node.parent.set_child(node.pdir, replacement)
     chain_repair(parent)
 
+    node.parent = None  # type: ignore
+
 
 def get_index(node: Node) -> int:
     idx = node_size(node.left)
@@ -194,30 +204,48 @@ def get_index(node: Node) -> int:
         node = parent
     return idx
 
+K = 811589153
+
 
 def main(args):
-    # file = open(args[1]) if len(args) > 1 else sys.stdin
-    # # data = [x.rstrip('\n').split('\n') for x in file.read().split('\n\n')]
-    # # data = [int(s.rstrip('\n')) for s in file]
-    # data = [s.rstrip('\n') for s in file]
+    file = open(args[1]) if len(args) > 1 else sys.stdin
+    odata = [int(s.rstrip('\n')) for s in file]
+    data = []
+    for k in range(200):
+        data.extend([i*K + k for i in odata])
+    idx0 = data.index(0)
+
+    import time
 
     tree = Node()
-    nobes = []
+    t0 = time.time()
+    nobes = [Node(payload=i) for i in data]
+    t1 = time.time()
+    print(f'{t1-t0:.3f}')
+
+    N = len(data)
 
     last = tree
-    for i in range(10):
-        nobe = Node(payload=str(i))
-        nobes.append(nobe)
+    for nobe in nobes:
         insert_after(last, nobe)
         last = nobe
-        print(traverse(tree))
+    t2 = time.time()
+    print(f'{t2-t1:.3f}')
 
-    for nobe in nobes:
-        print(get_index(nobe))
+    for _ in range(1):
+        for j, nobe in enumerate(nobes):
+            if j % 100 == 0:
+                print(j)
+            idx = get_index(nobe)
+            # -1 because we always insert *after*
+            nidx = (idx + nobe.payload - 1) % (N-1)
 
+            delete(nobe)
+            after = lookup(tree, nidx)
+            insert_after(after, nobe)
 
-    delete(nobes[5])
-    print(traverse(tree))
+    nidx0 = get_index(nobes[idx0])
+    print(sum(lookup(tree, (nidx0+k)%N).payload for k in (1000, 2000, 3000)))
 
 
 if __name__ == '__main__':
