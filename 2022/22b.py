@@ -1,16 +1,12 @@
 #!/usr/bin/env python3
 
 import sys
-from collections import defaultdict, Counter, deque
-from parse import parse
-import re
-import math
+from collections import defaultdict
 
-def extract(s):
-    return [int(x) for x in re.findall(r'(-?\d+).?', s)]
 
 def vadd(v1, v2):
     return tuple([x + y for x, y in zip(v1, v2)])
+
 def vsub(v1, v2):
     return tuple([x - y for x, y in zip(v1, v2)])
 
@@ -24,23 +20,7 @@ def dotp(v1, v2):
     return sum([x * y for x, y in zip(v1, v2)])
 
 
-def ichr(i):
-    return chr(ord('a') + i)
-
-def iord(c):
-    return ord(c.lower()) - ord('a')
-
-def optidx(d, opt=max, nth=0):
-    if not isinstance(d, dict):
-        d = dict(enumerate(d))
-    rv = opt(d.values())
-    return [i for i, v in d.items() if v == rv][nth], rv
-
-LETTERS = "abcdefghijklmnopqrstuvwxyz"
-
 UP, RIGHT, DOWN, LEFT = VDIRS = (0, -1), (1, 0), (0, 1), (-1, 0),
-DIRS = {'N': UP, 'E': RIGHT, 'S': DOWN, 'W': LEFT }
-ALL_DIRS = [(x, y) for x in [-1,0,1] for y in [-1,0,1] if not x == y == 0]
 FDIRS = [RIGHT, DOWN, LEFT, UP]
 
 def turn(v, d='left'):
@@ -64,6 +44,7 @@ def draw(painted):
     print(l)
 
 
+
 def main(args):
     file = open(args[1]) if len(args) > 1 else sys.stdin
     data = [x.rstrip('\n').split('\n') for x in file.read().split('\n\n')]
@@ -77,7 +58,6 @@ def main(args):
             m[(x, y)] = c
 
     cmd = cmd[0].replace('R', ' R ').replace('L', ' L ').split()
-    print(cmd)
 
     # print(mapo)
     draw(m)
@@ -88,39 +68,8 @@ def main(args):
             break
 
     N = len(mapo)
-    # print(N, N/4)
     N4 = N // 4
-    print(len(mapo), len(mapo[-1]))
-    N4 = 50
 
-
-    X, Y = 1, 2
-
-    TL, TR, BL, BR = 0, 1, 2, 3
-    dirs = {
-        (1, UP): (6, RIGHT, 1, ),
-        (1, LEFT): (4, RIGHT, 1, ),
-        (2, UP): (6, UP, 1, ),
-        (2, RIGHT): (5, LEFT, 1, ),
-        (2, DOWN): (3, LEFT, 1, ),
-        (3, RIGHT): (2, UP, 1),
-        (3, LEFT): (4, DOWN, 1,),
-        (4, UP): (3, RIGHT, 1,),
-        (4, LEFT): (1, RIGHT, 1),
-        (5, RIGHT): (2, LEFT, ),
-        (5, DOWN): (6, LEFT, ),
-        (6, RIGHT): (5, UP, ),
-        (6, DOWN): (2, DOWN, ),
-        (6, LEFT): (1, DOWN, ),
-    }
-    TOPS = [
-        (N4, 0),
-        (N4*2, 0),
-        (N4, N4),
-        (0, N4*2),
-        (N4, N4*2),
-        (0, N4*3),
-    ]
     CORNERS = {
         UP: (0, 0),
         RIGHT: (N4-1, 0),
@@ -128,36 +77,55 @@ def main(args):
         LEFT: (0, N4-1),
     }
 
+    # XXX: I have basically no idea how to derive this from the input i
+    dirs = {
+        (1, UP): (6, RIGHT),
+        (1, LEFT): (4, RIGHT),
+        (2, UP): (6, UP),
+        (2, RIGHT): (5, LEFT),
+        (2, DOWN): (3, LEFT),
+        (3, RIGHT): (2, UP),
+        (3, LEFT): (4, DOWN),
+        (4, UP): (3, RIGHT),
+        (4, LEFT): (1, RIGHT),
+        (5, RIGHT): (2, LEFT),
+        (5, DOWN): (6, LEFT),
+        (6, RIGHT): (5, UP),
+        (6, DOWN): (2, DOWN),
+        (6, LEFT): (1, DOWN),
+    }
+
+    # Compute top positions from the input; top to bottom, left to right
+    tops = []
+    for i in range(0, 4):
+        for j in range(0, 4):
+            c = (j*N4, i*N4)
+            if m.get(c, ' ') != ' ':
+                tops.append(c)
+
     def get_face(p):
-        x, y = p
-        if y < N4:
-            if x < 2*N4:
-                return 1
-            else:
-                return 2
-        elif y < N4*2:
-            return 3
-        elif y < N4*3:
-            if x < N4:
-                return 4
-            else:
-                return 5
-        else:
-            return 6
+        px, py = p
+        for i, (cx, cy) in enumerate(tops):
+            if cx <= px < cx+N4 and cy <= py < cy+N4:
+                return i + 1
 
     def wrap(p, f):
         if m[p] != ' ':
             return p, f
 
-        rf = (-f[0], -f[1])
+        rf = scale(-1, f)
         op = vadd(p, rf)
         face = get_face(op)
 
-        p_rel = vsub(op, TOPS[face-1])
+        # Find how far the point is from the "leading corner" on the
+        # exit edge, then reflect that across the middle of the entry
+        # edge of the new face.
+
+        p_rel = vsub(op, tops[face-1])
         corner = CORNERS[f]
         displacement = mag(vsub(p_rel, corner))
 
-        nface, nf, *_ = dirs[face, f]
+        nface, nf = dirs[face, f]
 
         canon_edge = turn(nf, 'left')
         canon_corner_dir = turn(canon_edge, 'left')
@@ -165,47 +133,16 @@ def main(args):
 
         displacement2 = (N4-1) - displacement
         pos_rel = vadd(canon_corner, scale(displacement2, canon_edge))
+        np = vadd(pos_rel, tops[nface-1])
 
-        print()
-        print(f'orig p={op}')
-        print(f'FUCK: {face=} {nface=} {f=}, {nf=}')
-        print(f'{displacement=} {p_rel=} {pos_rel=}')
-        # print("FUCK, face = ", face, f, ft, "dir =", dirs[face, f])
+        # print()
+        # print(f'orig p={op}')
+        # print(f'FUCK: {face=} {nface=} {f=}, {nf=}')
+        # print(f'{displacement=} {p_rel=} {pos_rel=}')
+        # print(f'{np=}')
+        # print('nf', nf)
 
-
-        np = vadd(pos_rel, TOPS[nface-1])
-        print(f'{np=}')
-        print('nf', nf)
         return np, nf
-
-        # print(p_rel)
-
-        # ft = turn(f, 'right')
-        # nb_p = dotp(f, p_rel)
-        # nb_q = dotp(ft, p_rel)
-
-        # nface, nf = dirs[face, f]
-        # rnf = (-nf[0], -nf[1])
-        # rnf2 = turn(rnf, 'right')
-
-        # np_rel = vadd(scale(nb_p, rnf), scale(nb_q, rnf2))
-        # np = vadd(np_rel, TOPS[nface-1])
-
-        # print("FUCK, face = ", face, f, ft, "dir =", dirs[face, f])
-        # print(nb_p, nb_q)
-        # print('nfs', rnf, rnf2)
-        # print(np_rel, np)
-
-        # assert m[np] != ' '
-
-        # return np
-
-        # print('coord', op, p, face)
-        # while True:
-        #     np = vadd(p, rf)
-        #     if m[np] == ' ':
-        #         return p
-        #     p = np
 
 
     print(start)
