@@ -7,7 +7,7 @@
 #define MAX_INPUT 1000
 #define MAX_BUF (MAX_INPUT*SCALE)
 
-#define ITERS 10
+#define ITERS 100
 
 
 #define min(x, y) ((x) < (y) ? (x) : (y))
