@@ -6,15 +6,6 @@ def parse(s):
     a, b = s.split(" ")
     return int(a), b
 
-def has(side, x):
-    return any(x == s[1] for s in side)
-
-def consumes(rxn, x):
-    return has(rxn[0], x)
-
-def produces(rxn, x):
-    return has(rxn[1], x)
-
 
 def go(producers, num):
     required = {"FUEL": num}
@@ -24,20 +15,18 @@ def go(producers, num):
         if pending == {'ORE'}: break
         to_try = next(x for x in pending if x != 'ORE')
 
-        rule = producers[to_try][0]
+        rule = producers[to_try]
         # print(rule)
-        num_produced = next(v for v, e in rule[1] if e == to_try)
+        num_produced, _ = rule[1]
         # print(produced)
         times = (required[to_try] - produced.get(to_try, 0) + (num_produced-1)) // num_produced
         for v, e in rule[0]:
             required[e] = required.get(e, 0) + times*v
-        for v, e in rule[1]:
-            produced[e] = produced.get(e, 0) + times*v
+        produced[to_try] = produced.get(to_try, 0) + times*num_produced
 
         # print(required, produced)
 
     return required['ORE']
-
 
 
 def main():
@@ -45,23 +34,11 @@ def main():
     rxns = []
     for line in data:
         l, r = line.split(" => ")
-        rxns.append(([parse(x) for x in l.split(", ")], [parse(x) for x in r.split(", ")]))
+        rxns.append(([parse(x) for x in l.split(", ")], parse(r)))
 
-    elements = {y for rxn in rxns for x, y in rxn[1]}
+    elements = {y for _, (x, y) in rxns}
 
-    producers = {}
-    consumers = {}
-    for element in elements:
-        for rxn in rxns:
-            if consumes(rxn, element):
-                consumers.setdefault(element, []).append(rxn)
-            if produces(rxn, element):
-                producers.setdefault(element, []).append(rxn)
-
-    # These let me figure out that what producer to use was fixed
-    # print({k: len(v) for k, v in producers.items()})
-    # print({k: len(v) for k, v in consumers.items()})
-
+    producers = {rxn[1][1]: rxn for rxn in rxns}
     part1 = go(producers, 1)
 
     # binary search for it
@@ -70,7 +47,7 @@ def main():
     while x < 1000000000000:
         n *= 2
         x = go(producers, n)
-        print(n, x)
+        # print(n, x)
 
     lo = n // 2
     hi = n
@@ -78,7 +55,7 @@ def main():
         mid = (lo + hi) // 2
         n = mid
         x = go(producers, n)
-        print(n, x)
+        # print(n, x)
         if x < 1000000000000:
             lo = mid + 1
         else:
