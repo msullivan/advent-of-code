@@ -68,6 +68,7 @@ def fft(l):
         x.append(go(i+1, partials))
     return x
 
+
 def display(data, offset):
     return ''.join(str(x) for x in data[offset:offset+8])
 
