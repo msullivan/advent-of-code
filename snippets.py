@@ -48,3 +48,27 @@ def dijkstra(m, edges, start, heuristic=None, target=None):
                 heapq.heappush(todo, (hcost, ncost, nbr))
 
     return cost, path
+
+
+def binary_search(pred, lo, hi=None):
+    """Finds the first n in [lo, hi) such that pred(n) holds.
+
+    hi == None -> infty
+    """
+    assert not pred(lo)
+
+    if hi is None:
+        hi = max(lo, 1)
+        while not pred(hi):
+            hi *= 2
+
+    assert pred(hi)
+
+    while lo < hi:
+        mid = (lo + hi) // 2
+        if pred(mid):
+            hi = mid
+        else:
+            lo = mid + 1
+
+    return lo
