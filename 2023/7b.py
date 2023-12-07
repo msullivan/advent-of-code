@@ -9,9 +9,9 @@ ORDER = {v: k for k, v in enumerate(ORDERS)}
 def characterize2(s):
     cnts = Counter(s)
     vals = sorted(cnts.values())
-    if vals[-1] == 5:
+    if vals == [5]:
         return 10
-    elif vals[-1] == 4:
+    elif vals == [1, 4]:
         return 9
     elif vals == [2, 3]:
         return 8
@@ -21,10 +21,8 @@ def characterize2(s):
         return 6
     elif vals == [1, 1, 1, 2]:
         return 5
-    elif vals == [1, 1, 1, 2]:
-        return 4
     else:
-        return 3
+        return 4
 
 
 def characterize(s):
