@@ -2,10 +2,7 @@
 
 import sys
 
-def main(args):
-    file = open(args[1]) if len(args) > 1 else sys.stdin
-    data = [s.rstrip('\n') for s in file]
-
+def solve(data, N):
     cols = set()
     rows = set()
 
@@ -14,8 +11,6 @@ def main(args):
             if c == '#':
                 rows.add(y)
                 cols.add(x)
-
-    N = 1000000
 
     galaxies = []
     yreal = 0
@@ -38,7 +33,18 @@ def main(args):
             dst = abs(y2-y1) + abs(x2-x1)
             sum += dst
 
-    print(sum)
+    return sum
+
+
+def main(args):
+    file = open(args[1]) if len(args) > 1 else sys.stdin
+    data = [s.rstrip('\n') for s in file]
+
+    p1 = solve(data, 1)
+    p2 = solve(data, 1000000)
+
+    print(p1)
+    print(p2)
 
 if __name__ == '__main__':
     main(sys.argv)
