@@ -9,10 +9,7 @@ def extract(s):
 def check(line, cnts):
     if '?' not in line:
         ls = [len(x) for x in line.split('.') if '.' not in x and len(x)]
-        if ls == cnts:
-            return 1
-        else:
-            return 0
+        return ls == cnts
 
     return (
         check(line.replace('?', '.', 1), cnts)
