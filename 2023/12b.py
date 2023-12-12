@@ -41,18 +41,15 @@ def main(args):
     data = [s.rstrip('\n') for s in file]
 
     sum = 0
-    i = 0
-    for l in data:
-        i += 1
-
+    for i, l in enumerate(data):
         l, nums = l.split(' ')
         nums = tuple(extract(nums))
 
         l = "?".join([l]*5)
         nums *= 5
-        l += '.'
-        v = check(l, nums)
-        print('=============', i-1, v)
+
+        v = check(l+'.', nums)
+        print('=============', i, v)
         sum += v
 
     print(sum)
