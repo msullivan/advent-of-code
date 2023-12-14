@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
 import sys
-
 import copy
+
+
 def slide(l):
     l = copy.deepcopy(l)
     for i in range(len(l)-1):
@@ -13,9 +14,11 @@ def slide(l):
 
     return l
 
+
 def rot(l):
-    l = [list(c) for c in zip(*l)]
+    l = [list(c) for c in zip(*l[::-1])]
     return l
+
 
 def fslide(m):
     while True:
@@ -27,23 +30,12 @@ def fslide(m):
     return nl
 
 
-
 def cycle(l):
-    l = fslide(l)
-    # print('\n'.join(''.join(r) for r in l))
-    # print()
-    l = rot(l)
-    l = fslide(l)
-    l = rot(l)[::-1]
-    l = fslide(l)
-    # l = l[::-1]
-    l = rot(l[::-1])[::-1]
-    l = fslide(l)
-    l = rot(l[::-1])
-    # print('s')
-    # print('\n'.join(''.join(r) for r in l))
-    # print()
+    for _ in range(4):
+        l = fslide(l)
+        l = rot(l)
     return l
+
 
 def score(m):
     sum = 0
@@ -54,6 +46,7 @@ def score(m):
                 sum += i
 
     return sum
+
 
 def main(args):
     file = open(args[1]) if len(args) > 1 else sys.stdin
