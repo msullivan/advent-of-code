@@ -6,8 +6,6 @@ from parse import parse
 import re
 import math
 
-def extract(s):
-    return [int(x) for x in re.findall(r'(-?\d+).?', s)]
 
 def vadd(v1, v2):
     return tuple([x + y for x, y in zip(v1, v2)])
@@ -19,14 +17,12 @@ def turn(v, d='left'):
     return VDIRS[(VDIRS.index(v) + n + len(VDIRS))%len(VDIRS)]
 
 
-##############################
-
 import heapq
 # This is A* if you pass a heuristic and a target, otherwise Dijkstra's
-def dijkstra(m, edges, start, heuristic=None, target=None):
-    cost = {start: 0}
+def dijkstra(m, edges, starts, heuristic=None, target=None):
+    cost = {start: 0 for start in starts}
     path = {}
-    todo = [(0, 0, start)]
+    todo = [(0, 0, start) for start in starts]
     explored = 0
 
     while todo and todo[0][-1] != target:
@@ -54,7 +50,6 @@ def edges(m, st):
         ops.append(((nxt, dir, cnt + 1), m[nxt]))
 
     if cnt >= 3:
-
         ldir = turn(dir)
         if (nxt := vadd(p, ldir)) in m:
             ops.append(((nxt, ldir, 0), m[nxt]))
@@ -66,11 +61,8 @@ def edges(m, st):
     return ops
 
 
-
 def main(args):
     file = open(args[1]) if len(args) > 1 else sys.stdin
-    # data = [x.rstrip('\n').split('\n') for x in file.read().split('\n\n')]
-    # data = [int(s.rstrip('\n')) for s in file]
     data = [s.rstrip('\n') for s in file]
 
     m = {}
@@ -78,26 +70,13 @@ def main(args):
         for x, c in enumerate(l):
             m[x, y] = int(c)
 
-    ## BOTH
     asdf = []
 
-    st = ((0, 0), RIGHT, 0)
+    st = [((0, 0), RIGHT, 0), ((0, 0), DOWN, 0)]
     res, _ = dijkstra(m, edges, st)
 
-    for (k, _, _), v in res.items():
-        if k == (len(data[0])-1, len(data)-1):
-            asdf.append(v)
-            print(k, v)
-
-    st = ((0, 0), DOWN, 0)
-    res, _ = dijkstra(m, edges, st)
-
-    for (k, _, _), v in res.items():
-        if k == (len(data[0])-1, len(data)-1):
-            asdf.append(v)
-            print(k, v)
-
-    print(min(asdf))
+    answer = min(v for k, v in res.items() if k[0] == (len(data[0])-1, len(data)-1))
+    print(answer)
 
 if __name__ == '__main__':
     main(sys.argv)
