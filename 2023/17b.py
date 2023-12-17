@@ -75,7 +75,10 @@ def main(args):
     st = [((0, 0), RIGHT, 0), ((0, 0), DOWN, 0)]
     res, _ = dijkstra(m, edges, st)
 
-    answer = min(v for k, v in res.items() if k[0] == (len(data[0])-1, len(data)-1))
+    answer = min(
+        v for (p, _, mv), v in res.items()
+        if p == (len(data[0])-1, len(data)-1) and mv >= 3
+    )
     print(answer)
 
 if __name__ == '__main__':
