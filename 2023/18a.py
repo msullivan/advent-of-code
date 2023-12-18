@@ -31,20 +31,27 @@ def draw(painted):
     print(l)
 
 
-def bfs(m, start):
+# This is super silly and not how I did it at competition time.
+# (Which was I ran it, and it hung, and I switched the direction.)
+import asyncio
+async def bfs(m, start):
     q = deque([start])
+    i = 0
     while q:
+        # lol.
+        if i % 1000 == 0:
+            await asyncio.sleep(0)
+        i += 1
+
         n = q.popleft()
         if m.get(n) == '#':
             continue
         m[n] = '#'
 
-        # if n == (-100, -100):
-        #     print('ABORT')
-        #     raise IndexError
-
         for d in DIRS.values():
             q.append(vadd(n, d))
+
+    return m
 
 def main(args):
     file = open(args[1]) if len(args) > 1 else sys.stdin
@@ -66,9 +73,21 @@ def main(args):
     # Uh if it hangs try the other one
     inside = vadd(lpos, turn(ldir, 'right'))
 
+    async def bfs_both():
+        ir = vadd(lpos, turn(ldir, 'right'))
+        il = vadd(lpos, turn(ldir, 'left'))
+        done, pending = await asyncio.wait(
+            [
+                asyncio.create_task(bfs(m.copy(), il)),
+                asyncio.create_task(bfs(m.copy(), ir)),
+            ],
+            return_when='FIRST_COMPLETED',
+        )
+        return await list(done)[0]
+
     print(len(m))
     draw(m)
-    bfs(m, inside)
+    m = asyncio.run(bfs_both())
     print(len(m))
 
 if __name__ == '__main__':
