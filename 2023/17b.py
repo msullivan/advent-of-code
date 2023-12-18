@@ -70,8 +70,6 @@ def main(args):
         for x, c in enumerate(l):
             m[x, y] = int(c)
 
-    asdf = []
-
     st = [((0, 0), RIGHT, 0), ((0, 0), DOWN, 0)]
     res, _ = dijkstra(m, edges, st)
 
