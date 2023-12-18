@@ -36,12 +36,9 @@ def draw(painted):
 import asyncio
 async def bfs(m, start):
     q = deque([start])
-    i = 0
     while q:
         # lol.
-        if i % 1000 == 0:
-            await asyncio.sleep(0)
-        i += 1
+        await asyncio.sleep(0)
 
         n = q.popleft()
         if m.get(n) == '#':
@@ -68,10 +65,6 @@ def main(args):
             lpos, ldir = pos, DIRS[d]
             pos = vadd(pos, DIRS[d])
             m[pos] = '#'
-            # spots.add(pos)
-
-    # Uh if it hangs try the other one
-    inside = vadd(lpos, turn(ldir, 'right'))
 
     async def bfs_both():
         ir = vadd(lpos, turn(ldir, 'right'))
@@ -85,7 +78,6 @@ def main(args):
         )
         return await list(done)[0]
 
-    print(len(m))
     draw(m)
     m = asyncio.run(bfs_both())
     print(len(m))
