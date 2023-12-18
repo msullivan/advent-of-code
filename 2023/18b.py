@@ -30,14 +30,11 @@ def main(args):
         n = int(x[2:-2], 16)
         d = 'RDLU'[int(x[-2])]
 
-        npos = vadd(pos, DIRS[d], n)
+        pos = vadd(pos, DIRS[d], n)
+        poses.append(pos)
+        perim += n
 
-        if d in 'RD':
-            perim += n
-        poses.append(npos)
-        pos = npos
-
-    print(int(area(poses)) + perim + 1)
+    print(int(area(poses)) + perim//2 + 1)
 
 
 if __name__ == '__main__':
