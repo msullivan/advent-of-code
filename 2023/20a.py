@@ -9,37 +9,24 @@ def main(args):
 
     inputs = defaultdict(list)
     nodes = {}
-    flops = {}
-    conjs = {}
 
     for line in data:
         l, r = line.split(' -> ')
         outs = r.split(', ')
-        if l[0] == '%':
-            n = l[1:]
-            c = '%'
-            flops[n] = False
-        elif l[0] == '&':
-            n = l[1:]
-            c = '&'
-        else:
-            n = l
-            c = 'b'
 
+        c, n = l[0], l[1:]
         nodes[n] = (c, outs)
         for out in outs:
             inputs[out].append(n)
 
-    for name, (typ, outs) in nodes.items():
-        if typ == '&':
-            outs = inputs[name]
-            conjs[name] = {k: False for k in outs}
+    flops = {k: False for k in nodes}
+    conjs = {name: {k: False for k in outs} for name, outs in inputs.items()}
 
     nsent = [0, 0]
 
     evs = deque()
     for cnt in range(1000):
-        evs.append(('broadcaster', False, 'button'))
+        evs.append(('roadcaster', False, 'button'))
         while evs:
             node, val, sender = evs.pop()
             # print(sender, val, node)
