@@ -44,17 +44,10 @@ def candrop(data, live, x):
 
     nx = drop(x)
     sx = spots(x)
-    live -= sx
     overlap = spots(nx) & live
-    live |= sx
-    if overlap:
+    if overlap - sx:
         return None
-    # print('fuck', overlap, sx)
-    # if overlap - sx:
-    #     print('bail')
-    #     return None
     return nx
-    print("DROPPED", x, nx)
 
 
 def main(args):
@@ -64,8 +57,6 @@ def main(args):
     data = [extract(s.rstrip('\n')) for s in file]
 
     data = [(tuple(x[:3]), tuple(x[3:])) for x in data]
-
-    # data.sort(key=lambda x: min(x[0][2], x[1][2]))
 
     asdf = LETTERS
     asdf = defaultdict(lambda: '')

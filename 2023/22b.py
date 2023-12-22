@@ -14,25 +14,14 @@ def dropx(p):
 def drop(p):
     return dropx(p[0]), dropx(p[1])
 
-def gspots(p):
-    p0, p1 = p
-    if p0[0] != p1[0]:
-        s, e = sorted([p0[0], p1[0]])
-        for i in range(s, e+1):
-            yield i, p0[1], p1[2]
-    elif p0[1] != p1[1]:
-        s, e = sorted([p0[1], p1[1]])
-        for i in range(s, e+1):
-            yield p0[0], i, p1[2]
-    elif p0[2] != p1[2]:
-        s, e = sorted([p0[2], p1[2]])
-        for i in range(s, e+1):
-            yield p0[0], p0[1], i
-    else:
-        yield p0
-
 def spots(p):
-    return set(gspots(p))
+    sp = set()
+    p0, p1 = p
+    for x in range(p0[0], p1[0]+1):
+        for y in range(p0[1], p1[1]+1):
+            for z in range(p0[2], p1[2]+1):
+                sp.add((x, y, z))
+    return sp
 
 def collides(x, y):
     sy = list(spots(y))
@@ -44,21 +33,10 @@ def candrop(data, live, x):
 
     nx = drop(x)
     sx = spots(x)
-    live -= sx
     overlap = spots(nx) & live
-    live |= sx
-    if overlap:
+    if overlap - sx:
         return None
-    # print('fuck', overlap, sx)
-    # if overlap - sx:
-    #     print('bail')
-    #     return None
     return nx
-    print("DROPPED", x, nx)
-
-    active = set()
-    for x in data:
-        active |= set(spots(x))
 
 def go(data, kill, active):
     data = list(data)
