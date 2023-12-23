@@ -49,8 +49,8 @@ def draw(painted, fuck, lu):
     maxy = max(y for x, y in painted)
 
     l = ""
-    maxx *= 2
-    maxy *= 2
+    maxx *= 1
+    maxy *= 1
     # XXX: add reversed if needed
     for y in list((range(miny, maxy+1))):
         for x in range(minx, maxx+1):
@@ -63,6 +63,39 @@ def draw(painted, fuck, lu):
                 l += lu((x,y))
         l += "\n"
     print(l)
+
+
+def amod(x, n):
+    return ((x % n) + n) % n
+
+
+def run(data, m, start):
+
+    def lu(p):
+        x, y = p
+        x = amod(x, len(data[0]))
+        y = amod(y, len(data))
+        return m[x, y]
+
+    cnt = []
+    spots = {start}
+    back = None
+    while True:
+        cnt.append(len(spots))
+        # draw(m, spots, lu)
+        nxt = set()
+        for n in spots:
+            for dnbr in VDIRS:
+                nbr = vadd(n, dnbr)
+                if lu(nbr) == '.' and nbr in m:
+                    nxt.add(nbr)
+        # print(len(cnt)-1, len(nxt), len(nxt) - len(spots))
+        if nxt == back:
+            break
+        back = spots
+        spots = nxt
+
+    return cnt
 
 
 
@@ -80,32 +113,31 @@ def main(args):
                 c = '.'
             m[x, y] = c
 
-    def amod(x, n):
-        return ((x % n) + n) % n
-
-    def lu(p):
-        x, y = p
-        x = amod(x, len(data[0]))
-        y = amod(y, len(data))
-        return m[x, y]
-
     print(len(data[0]), len(data))
+    print(start)
 
-    seen = set()
-    spots = {start}
-    for i in range(100000):
-        draw(m, spots, lu)
-        nxt = set()
-        for n in spots:
-            for dnbr in VDIRS:
-                nbr = vadd(n, dnbr)
-                if lu(nbr) == '.':
-                    nxt.add(nbr)
-        print(i, len(nxt), len(nxt) - len(spots))
-        spots = nxt
+    N = len(data)
+    S = start[0]
 
+    cnts = run(data, m, start)
+    print(cnts)
+    print(len(cnts))
 
-    print(len(spots))
+    fcnts = []
+    flat = [(0, S), (N-1, S), (S, 0), (S, N-1)]
+    for s in flat:
+        cnts = run(data, m, s)
+        fcnts.append(cnts)
+        print(cnts)
+        print(len(cnts))
+
+    dcnts = []
+    diag = [(0, 0), (N-1, 0), (0, N-1), (N-1, N-1)]
+    for s in flat:
+        cnts = run(data, m, s)
+        dcnts.append(cnts)
+        print(cnts)
+        print(len(cnts))
 
 
 if __name__ == '__main__':
