@@ -1,46 +1,12 @@
 #!/usr/bin/env python3
 
 import sys
-from collections import defaultdict, Counter, deque
-from parse import parse
-import re
-import math
-
-def extract(s):
-    return [int(x) for x in re.findall(r'(-?\d+).?', s)]
 
 def vadd(v1, v2):
     return tuple([x + y for x, y in zip(v1, v2)])
 
-def ichr(i):
-    return chr(ord('a') + i)
-
-def iord(c):
-    return ord(c.lower()) - ord('a')
-
-def optidx(d, opt=max, nth=0):
-    if not isinstance(d, dict):
-        d = dict(enumerate(d))
-    rv = opt(d.values())
-    return [i for i, v in d.items() if v == rv][nth], rv
-
-LETTERS = "abcdefghijklmnopqrstuvwxyz"
 
 UP, RIGHT, DOWN, LEFT = VDIRS = (0, -1), (1, 0), (0, 1), (-1, 0),
-DIRS = {'N': UP, 'E': RIGHT, 'S': DOWN, 'W': LEFT }
-ALL_DIRS = [(x, y) for x in [-1,0,1] for y in [-1,0,1] if not x == y == 0]
-
-def turn(v, d='left'):
-    n = -1 if d == 'left' else 1
-    return VDIRS[(VDIRS.index(v) + n + len(VDIRS))%len(VDIRS)]
-
-
-#####
-
-
-
-
-##############################
 
 def draw(painted, fuck, lu):
     minx = min(x for x, y in painted)
@@ -69,7 +35,7 @@ def amod(x, n):
     return ((x % n) + n) % n
 
 
-def run(data, m, start):
+def run(data, m, start, open=True):
 
     def lu(p):
         x, y = p
@@ -80,14 +46,22 @@ def run(data, m, start):
     cnt = []
     spots = {start}
     back = None
-    while True:
+
+    nums = []
+    i = 0
+    while len(nums) < 3:
+        if (i - 65) % 131 == 0:
+            print(i, len(spots))
+            nums.append(len(spots))
+        i += 1
+
         cnt.append(len(spots))
         # draw(m, spots, lu)
         nxt = set()
         for n in spots:
             for dnbr in VDIRS:
                 nbr = vadd(n, dnbr)
-                if lu(nbr) == '.' and nbr in m:
+                if lu(nbr) == '.' and (open or nbr in m):
                     nxt.add(nbr)
         # print(len(cnt)-1, len(nxt), len(nxt) - len(spots))
         if nxt == back:
@@ -95,9 +69,29 @@ def run(data, m, start):
         back = spots
         spots = nxt
 
-    return cnt
+    return nums
+    # return cnt
 
+# https://stackoverflow.com/questions/19175037/determine-a-b-c-of-quadratic-equation-using-data-points
+def coefficient(x,y):
+    x_1 = x[0]
+    x_2 = x[1]
+    x_3 = x[2]
+    y_1 = y[0]
+    y_2 = y[1]
+    y_3 = y[2]
 
+    a = y_1/((x_1-x_2)*(x_1-x_3)) + y_2/((x_2-x_1)*(x_2-x_3)) + y_3/((x_3-x_1)*(x_3-x_2))
+
+    b = (-y_1*(x_2+x_3)/((x_1-x_2)*(x_1-x_3))
+         -y_2*(x_1+x_3)/((x_2-x_1)*(x_2-x_3))
+         -y_3*(x_1+x_2)/((x_3-x_1)*(x_3-x_2)))
+
+    c = (y_1*x_2*x_3/((x_1-x_2)*(x_1-x_3))
+        +y_2*x_1*x_3/((x_2-x_1)*(x_2-x_3))
+        +y_3*x_1*x_2/((x_3-x_1)*(x_3-x_2)))
+
+    return a,b,c
 
 def main(args):
     file = open(args[1]) if len(args) > 1 else sys.stdin
@@ -119,25 +113,38 @@ def main(args):
     N = len(data)
     S = start[0]
 
-    cnts = run(data, m, start)
-    print(cnts)
-    print(len(cnts))
+    # print(S)
+    things = run(data, m, start)
+    # print(cnts)
+    # print(len(cnts))
 
-    fcnts = []
-    flat = [(0, S), (N-1, S), (S, 0), (S, N-1)]
-    for s in flat:
-        cnts = run(data, m, s)
-        fcnts.append(cnts)
-        print(cnts)
-        print(len(cnts))
+    # things = [3703, 32712, 90559]
+    a, b, c = coefficient([0,1,2], things)
+    print(a,b,c)
+    x = 3
 
-    dcnts = []
-    diag = [(0, 0), (N-1, 0), (0, N-1), (N-1, N-1)]
-    for s in flat:
-        cnts = run(data, m, s)
-        dcnts.append(cnts)
-        print(cnts)
-        print(len(cnts))
+    x = (26501365 - S) / N
+    print(x)
+
+    y = a*x*x + b*x + c
+    print(int(y))
+
+    # fcnts = []
+    # flat = [(0, S), (N-1, S), (S, 0), (S, N-1)]
+    # for s in flat:
+    #     cnts = run(data, m, s)
+    #     fcnts.append(cnts)
+    #     print(cnts)
+    #     print(len(cnts))
+
+    # print()
+    # dcnts = []
+    # diag = [(0, 0), (N-1, 0), (0, N-1), (N-1, N-1)]
+    # for s in diag:
+    #     cnts = run(data, m, s)
+    #     dcnts.append(cnts)
+    #     print(cnts)
+    #     print(len(cnts))
 
 
 if __name__ == '__main__':
