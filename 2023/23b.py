@@ -21,6 +21,10 @@ def main(args):
             m[x, y] = c
 
     def nbrs(p):
+        if m[p] == 'v':
+            return [vadd(DOWN, p)]
+        if m[p] == '>':
+            return [vadd(RIGHT, p)]
         ns = []
         for dir in VDIRS:
             np = vadd(dir, p)
@@ -78,7 +82,10 @@ def main(args):
         if cnted % 10000 == 0:
             print(cnted)
 
-        res = max(dst + go(x) for x, dst in tree[node].items())
+        if end in tree[node]:
+            res = tree[node][end]
+        else:
+            res = max(dst + go(x) for x, dst in tree[node].items())
         seen.remove(node)
         return res
 
