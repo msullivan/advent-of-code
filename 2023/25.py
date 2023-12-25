@@ -20,7 +20,8 @@ def contract(graph, edges):
     while len(nodes) > 2:
         i = random.randint(0, len(edges)-1)
         e = edges[i]
-        del edges[i] # XXX
+        edges[i] = edges[-1]
+        del edges[-1]
 
         e0 = e[0]
         while e0 in merges:
@@ -45,7 +46,6 @@ def contract(graph, edges):
     n2s = n2.split('-')
 
     cutedges = {(s, d) for s in n1s for d in graph[s] if d in n2s}
-    print(cutedges)
     return cutedges, n1s, n2s
 
 
@@ -68,7 +68,7 @@ def main(args):
     print(graph)
     for i in itertools.count(1):
         cuts, n1s, n2s = contract(graph, edges)
-        print(i)
+        print(i, cuts)
         if len(cuts) == 3:
             break
 
