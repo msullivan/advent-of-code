@@ -5,45 +5,50 @@ import itertools
 from collections import defaultdict
 import random
 
+def lookup(merges, k):
+    e0 = k
+    while e0 in merges:
+        e0 = merges[e0]
+        merges[k] = e0
+    return e0
+
 # Implement Karger's randomized algorithm for computing minimum cut
 # We'll loop until we get something where the cut is 3
 # https://en.wikipedia.org/wiki/Karger%27s_algorithm
 def contract(graph, edges):
-    ograph = graph
-    graph = {k: v.copy() for k, v in graph.items()}
-    nodes = set(graph)
-    edges = list(set(edges))
+    edges = list(edges)
 
     merges = dict()
+    sizes = dict()
 
-    N = len(edges)
-    while len(nodes) > 2:
-        i = random.randint(0, len(edges)-1)
+    N = len(graph)
+    M = len(edges)
+    while N > 2:
+        # print(M)
+        # print(len(edges), M)
+        assert len(edges) == M
+        i = random.randrange(0, len(edges))
         e = edges[i]
-        edges[i] = edges[-1]
+        edges[i], edges[-1] = edges[-1], edges[i]
         del edges[-1]
+        M -= 1
 
-        e0 = e[0]
-        while e0 in merges:
-            e0 = merges[e0]
-        e1 = e[1]
-        while e1 in merges:
-            e1 = merges[e1]
+        e0 = lookup(merges, e[0])
+        e1 = lookup(merges, e[1])
 
         if e1 == e0:
             continue
 
-        new = e0 + '-' + e1
-        merges[e0] = merges[e1] = new
-        # print('!', len(nodes), e0, e1, new)
-        # print(nodes)
-        nodes.remove(e0)
-        nodes.discard(e1)
-        nodes.add(new)
+        N -= 1
 
-    n1, n2 = list(nodes)
-    n1s = n1.split('-')
-    n2s = n2.split('-')
+        merges[e0] = e1
+
+    groups = {}
+    for n in graph:
+        n0 = lookup(merges, n)
+        groups.setdefault(n0, []).append(n)
+
+    n1s, n2s = groups.values()
 
     cutedges = {(s, d) for s in n1s for d in graph[s] if d in n2s}
     return cutedges, n1s, n2s
@@ -55,24 +60,28 @@ def main(args):
     # data = [int(s.rstrip('\n')) for s in file]
     data = [s.rstrip('\n') for s in file]
 
-    graph = defaultdict(set)
-    edges = set()
+    random.seed(1338)
+
+    graph = defaultdict(list)
+    edges = []
 
     for line in data:
         s, ks = line.split(': ')
         for k in ks.split(' '):
-            graph[s].add(k)
-            graph[k].add(s)
-            edges.add(tuple(sorted([k, s])))
+            graph[s].append(k)
+            graph[k].append(s)
+            edges.append(tuple(sorted([k, s])))
 
     print(graph)
-    for i in itertools.count(1):
+    # for i in itertools.count(1):
+    for i in range(200):
         cuts, n1s, n2s = contract(graph, edges)
         print(i, cuts)
         if len(cuts) == 3:
-            break
+            res = len(n1s)*len(n2s)
+            # break
 
-    print(len(n1s)*len(n2s))
+    print(res)
 
 if __name__ == '__main__':
     main(sys.argv)
