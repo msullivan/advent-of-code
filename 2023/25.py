@@ -10,12 +10,24 @@ def lookup(merges, k):
     while e0 in merges:
         e0 = merges[e0]
 
-    while k in merges:
-        p = merges[k]
-        merges[k] = e0
-        k = p
+    # Path compression actually made things slower in practice
+    # while k in merges:
+    #     p = merges[k]
+    #     merges[k] = e0
+    #     k = p
 
     return e0
+
+
+def union(merges, ranks, e0, e1):
+    rank0 = ranks.get(e0, 0)
+    rank1 = ranks.get(e1, 0)
+    if rank0 < rank1:
+        e0, e1 = e1, e0
+    elif rank0 == rank1:
+        ranks[e0] = rank0 + 1
+    merges[e1] = e0
+
 
 # Implement Karger's randomized algorithm for computing minimum cut
 # We'll loop until we get something where the cut is 3
@@ -23,8 +35,7 @@ def lookup(merges, k):
 def contract(graph, edges):
     edges = list(edges)
 
-    merges = dict()
-    sizes = dict()
+    merges, ranks = {}, {}
 
     N = len(graph)
     M = len(edges)
@@ -40,8 +51,9 @@ def contract(graph, edges):
         if e0 == e1:
             continue
 
+        union(merges, ranks, e0, e1)
+
         N -= 1
-        merges[e0] = e1
 
     groups = {}
     for n in graph:
