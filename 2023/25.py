@@ -9,7 +9,12 @@ def lookup(merges, k):
     e0 = k
     while e0 in merges:
         e0 = merges[e0]
+
+    while k in merges:
+        p = merges[k]
         merges[k] = e0
+        k = p
+
     return e0
 
 # Implement Karger's randomized algorithm for computing minimum cut
