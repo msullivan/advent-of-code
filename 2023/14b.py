@@ -1,16 +1,25 @@
 #!/usr/bin/env python3
 
+# This was not the original approach. My original approach shifted one
+# at a time and took like a minute. See 14a for that.
+
 import sys
-import copy
 
-
-def slide(l):
-    l = copy.deepcopy(l)
-    for i in range(len(l)-1):
-        for j in range(len(l[0])):
-            if l[i][j] == '.' and l[i+1][j] == 'O':
-                l[i][j] = 'O'
-                l[i+1][j] = '.'
+def fslide(l):
+    for j in range(len(l[0])):
+        open = None
+        for i in range(len(l)):
+            c = l[i][j]
+            xo = open
+            if open is None and c == '.':
+                open = i
+            elif open is not None and c == 'O':
+                l[open][j] = 'O'
+                l[i][j] = '.'
+                open += 1
+                change = True
+            elif c != '.':
+                open = None
 
     return l
 
@@ -18,16 +27,6 @@ def slide(l):
 def rot(l):
     l = [list(c) for c in zip(*l[::-1])]
     return l
-
-
-def fslide(m):
-    while True:
-        nl = slide(m)
-        if nl == m:
-            break
-        m = nl
-
-    return nl
 
 
 def cycle(l):
