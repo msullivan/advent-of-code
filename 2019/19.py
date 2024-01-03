@@ -29,7 +29,7 @@ def box(p, x, y, sz):
 
 def main(args):
     data = [s.strip() for s in sys.stdin]
-    p = array.array('q', [int(x) for x in data[0].split(",")])
+    p = array.array('q', [int(x) for x in data[0].split(",")] + [0]*50)
     board = defaultdict(lambda: " ")
 
     # Part 1
