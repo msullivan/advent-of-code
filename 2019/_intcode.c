@@ -5,16 +5,35 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-/* There isn't a C API for array.array so I make own API. */
-typedef struct arrayobject {
-    PyObject_VAR_HEAD
-    char *ob_item;
-} arrayobjectprefix;
-
-#define _get_array(o) ((int64_t *)((arrayobjectprefix *)o)->ob_item)
-
-static int grow_array(PyObject *array, int amount, ssize_t *psize, int64_t **pmem)
+/* Apparently there *was* a legit way to do this!
+ * Originally "I make own API" to array.array.
+ * This will also work for numpy arrays, though calling
+ * append won't. */
+static int get_buffer(PyObject *array, Py_buffer *buffer,
+                      ssize_t *psize, int64_t **pmem)
 {
+    if (PyObject_GetBuffer(array, buffer,
+                           PyBUF_WRITABLE|PyBUF_SIMPLE|PyBUF_FORMAT) == -1) {
+        return -1;
+    }
+    if (strcmp(buffer->format, "q") != 0) {
+        PyErr_Format(
+            PyExc_TypeError, "invalid array format; needed 'q' but got '%s'",
+            buffer->format);
+        PyBuffer_Release(buffer);
+        return -1;
+    }
+    *psize = buffer->len / sizeof(int64_t);
+    *pmem = buffer->buf;
+    return 0;
+}
+
+
+static int grow_array(PyObject *array, Py_buffer *buffer,
+                      int amount, ssize_t *psize, int64_t **pmem)
+{
+    PyBuffer_Release(buffer);
+
     ssize_t start = Py_SIZE(array);
     amount = amount * 8 / 7;
     // this could be a lot better but I expect it won't come up that much
@@ -23,9 +42,7 @@ static int grow_array(PyObject *array, int amount, ssize_t *psize, int64_t **pme
         if (!res) return -1;
         Py_DECREF(res);
     }
-    *psize = Py_SIZE(array);
-    *pmem = _get_array(array);
-    return 0;
+    return get_buffer(array, buffer, psize, pmem);
 }
 
 static int mode_divs[] = { 0, 100, 1000, 10000 };
@@ -50,13 +67,13 @@ static int64_t read_mem(int64_t *mem, ssize_t size, int64_t addr) {
 
 #define ADDR(i) compute_addr(mem, i, instr, ip, relative_base)
 #define READ(i) read_mem(mem, size, ADDR(i))
-#define WRITE(i, v) do {                                        \
-        int64_t __addr = ADDR(i);                               \
-        if (__addr >= size) {                                   \
-            if (grow_array(program, __addr, &size, &mem) < 0)   \
-                return -1;                                      \
-        }                                                       \
-        mem[__addr] = (v);                                      \
+#define WRITE(i, v) do {                                                \
+        int64_t __addr = ADDR(i);                                       \
+        if (__addr >= size) {                                           \
+            if (grow_array(program, &buffer, __addr, &size, &mem) < 0)  \
+                goto err;                                               \
+        }                                                               \
+        mem[__addr] = (v);                                              \
     } while (0)
 
 
@@ -66,8 +83,12 @@ _execute_intcode(PyObject *program,
                  PyObject *input, PyObject *output,
                  int64_t *p_max_instrs)
 {
-    ssize_t size = Py_SIZE(program);
-    int64_t *mem = _get_array(program);
+    Py_buffer buffer = { .buf = NULL };
+    ssize_t size;
+    int64_t *mem;
+
+    if (get_buffer(program, &buffer, &size, &mem) < 0) goto err;
+
     int64_t ip = *p_ip;
     int64_t relative_base = *p_relative_base;
     int64_t cnt = 0;
@@ -77,8 +98,7 @@ _execute_intcode(PyObject *program,
 
     while (ip >= 0) {
         if (ip + 4 >= size) {
-            if (grow_array(program, ip + 4, &size, &mem) < 0)
-                return -1;
+            if (grow_array(program, &buffer, ip + 4, &size, &mem) < 0) goto err;
         }
         if (max_instrs && cnt++ > max_instrs) break;
 
@@ -94,19 +114,19 @@ _execute_intcode(PyObject *program,
             ip += 4;
             break;
         case 3: {
-            if ((res = PyObject_IsTrue(input)) < 0) return -1;
+            if ((res = PyObject_IsTrue(input)) < 0) goto err;
             if (!res)
                 goto out; /* queue empty */
-            if (!(obj = PyObject_CallMethod(input, "pop", "i", 0))) return -1;
+            if (!(obj = PyObject_CallMethod(input, "pop", "i", 0))) goto err;
             int64_t val = PyLong_AsLongLong(obj);
             Py_DECREF(obj);
-            if (val == -1 && PyErr_Occurred()) return -1;
+            if (val == -1 && PyErr_Occurred()) goto err;
             WRITE(1, val);
             ip += 2;
             break;
         }
         case 4:
-            if (!(obj = PyObject_CallMethod(output, "append", "L", READ(1)))) return -1;
+            if (!(obj = PyObject_CallMethod(output, "append", "L", READ(1)))) goto err;
             Py_DECREF(obj);
             ip += 2;
             break;
@@ -141,17 +161,23 @@ _execute_intcode(PyObject *program,
             break;
         default:
             PyErr_Format(PyExc_RuntimeError, "Invalid instruction %d at ip=%d", instr, ip);
-            return -1;
+            goto err;
         }
 
     }
 out:
+
+    PyBuffer_Release(&buffer);
 
     *p_ip = ip;
     *p_relative_base = relative_base;
     *p_max_instrs = cnt;
 
     return 0;
+
+err:
+    PyBuffer_Release(&buffer);
+    return -1;
 }
 
 static PyObject *
