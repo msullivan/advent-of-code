@@ -20,7 +20,7 @@ def trace(board, sources):
     routes = {}
 
     for source in sources:
-        routes[source] = set()
+        routes[board[source]] = set()
 
         q = deque([(0, frozenset(), source)])
         seen = {source}
@@ -40,7 +40,7 @@ def trace(board, sources):
 
                 ndoors = doors
                 if tp.islower():
-                    routes[source].add((nextpos, steps+1, doors))
+                    routes[board[source]].add((board[nextpos], steps+1, doors))
                     # Treat a key like a door: you can't pass a key without
                     # picking it up. (This is a *big* optimization.)
                     ndoors = doors | {tp}
@@ -103,6 +103,9 @@ def go(m, part1):
                 board[add(source, (dx, dy))] = '@'
 
     sources = tuple(sorted(k for k, v in board.items() if v == "@"))
+    ssources = ''.join(str(i) for i in range(len(sources)))
+    for src, name in zip(sources, ssources):
+        board[src] = name
 
     routes = trace(board, sources)
 
@@ -110,21 +113,18 @@ def go(m, part1):
         poses, keys = cur
 
         # print()
-        # print(''.join(board[c] for c in poses), cur, '==================')
-        for i, pos in enumerate(poses):
+        # print(cur, '==================')
+        for pos in poses:
             for target, dist, doors in routes[pos]:
-                if board[target] not in keys and doors.issubset(keys):
-                    nextposes = list(poses)
-                    nextposes[i] = target
-                    nextposes = tuple(nextposes)
-
-                    nextkeys = keys | {board[target]}
+                if target not in keys and doors.issubset(keys):
+                    nextposes = poses.replace(pos, target)
+                    nextkeys = keys | {target}
 
                     nxt = (nextposes, nextkeys)
-                    # print(''.join(board[c] for c in nextposes), nxt, dist)
+                    # print(nxt, dist)
                     yield nxt, dist
 
-    cost, final = dijkstra(edges, (sources, frozenset()), target=allkeys)
+    cost, final = dijkstra(edges, (ssources, frozenset()), target=allkeys)
 
     return cost[final]
 
