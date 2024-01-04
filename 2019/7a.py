@@ -66,7 +66,7 @@ def main(args):
         for i in x:
             out = run(list(p), [i, input])
             input = out[0]
-        outs += [out]
+        outs += [input]
     print(outs)
     print(max(outs))
 
