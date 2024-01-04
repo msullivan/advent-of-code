@@ -21,8 +21,6 @@ def main(args):
         for x in range(len(m[y])):
             board[x,y] = m[y][x]
 
-
-
     source = next(k for k, v in board.items() if v == "@")
     allkeys = {v for v in board.values() if v.islower()}
     print(allkeys)
@@ -32,12 +30,16 @@ def main(args):
 
     while q:
         steps, (pos, keys) = q.popleft()
-#        print(steps, pos, keys)
+        # print(steps, pos, keys)
         if keys == allkeys:
             break
 
-        for dir in range(0, 4):
-            nextpos = add(pos, DIRS[dir])
+        for dir in DIRS:
+            nextpos = add(pos, dir)
+            tp = board[nextpos]
+            if tp == '#':
+                continue
+
             nkeys = keys
             if board[nextpos].islower():
                 nkeys = keys | frozenset([board[nextpos]])
@@ -46,9 +48,7 @@ def main(args):
 
             seen.add((nextpos, nkeys))
 
-
-            tp = board[nextpos]
-            if tp != "#" and (not tp.isupper() or tp.lower() in keys):
+            if not tp.isupper() or tp.lower() in keys:
                 q.append((steps+1, (nextpos, nkeys)))
 
     print(steps)
