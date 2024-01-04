@@ -32,6 +32,9 @@ def trace(board, sources):
                 tp = board[nextpos]
                 if tp == '#':
                     continue
+                if nextpos in seen:
+                    continue
+                seen.add(nextpos)
 
                 if tp.islower():
                     routes[source].add((nextpos, steps+1, doors))
@@ -41,9 +44,6 @@ def trace(board, sources):
                 if tp.isupper():
                     ndoors = doors | {tp.lower()}
 
-                if nextpos in seen:
-                    continue
-                seen.add(nextpos)
                 q.append((steps+1, ndoors, nextpos))
 
     return routes
@@ -102,8 +102,9 @@ def go(m, part1):
 
     def edges(cur):
         poses, keys = cur
-        es = []
 
+        # print()
+        # print(''.join(board[c] for c in poses), cur, '==================')
         for i, pos in enumerate(poses):
             for target, dist, doors in routes[pos]:
                 if doors.issubset(keys):
@@ -113,14 +114,9 @@ def go(m, part1):
 
                     nextkeys = keys | {board[target]}
 
-                    es.append(((nextposes, nextkeys), dist))
-
-        # print(board[cur[0][0]], cur, '==================')
-        # for x in es:
-        #     print(board[x[0][0][0]], x)
-        # print()
-
-        return es
+                    nxt = (nextposes, nextkeys)
+                    # print(''.join(board[c] for c in nextposes), nxt, dist)
+                    yield nxt, dist
 
     cost, final = dijkstra(edges, (sources, frozenset()), target=allkeys)
 
@@ -128,7 +124,8 @@ def go(m, part1):
 
 
 def main(args):
-    data = [s.strip() for s in sys.stdin]
+    file = open(args[1]) if len(args) > 1 else sys.stdin
+    data = [s.strip() for s in file]
 
     part1 = go(data, part1=True)
     part2 = go(data, part1=False)
