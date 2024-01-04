@@ -46,7 +46,7 @@ def main(args):
 
     best = 100000000000000000000
     while bigq:
-#        if not bigq: print(seen)
+        # if not bigq: print(seen)
         i += 1
         bigsteps, (bigposes, bigkeys) = bigq.popleft()
         if i % 100 == 0:
@@ -55,7 +55,7 @@ def main(args):
             print("FUCK GOT IT", bigsteps)
             best = min(best, bigsteps)
 
-        for robot in range(4):
+        for robot in range(len(sources)):
 
             q = deque([(bigsteps, (bigposes, bigkeys))])
             j = 0
@@ -87,39 +87,6 @@ def main(args):
                         # print("YEAAAH", bigq[-1], tp)
                     elif tp != "#" and (not tp.isupper() or tp.lower() in keys):
                         q.append((steps+1, (nextposes, nkeys)))
-
-
-
-    # i = 0
-    # while q:
-    #     i += 1
-    #     steps, (poses, keys) = q.popleft()
-    #     if i % 1000 == 0:
-    #         print(i, steps, poses, keys)
-    #     if keys == allkeys:
-    #         break
-
-    #     for robot in range(4):
-    #         for dir in range(0, 4):
-    #             nextpos = add(poses[robot], DIRS[dir])
-    #             # update
-    #             nextposes = list(poses)
-    #             nextposes[robot] = nextpos
-    #             nextposes = tuple(nextposes)
-
-    #             # lol
-    #             nkeys = keys
-    #             if board[nextpos].islower():
-    #                 nkeys = keys | frozenset([board[nextpos]])
-    #             if (nextposes, nkeys) in seen:
-    #                 continue
-
-    #             seen.add((nextposes, nkeys))
-
-
-    #             tp = board[nextpos]
-    #             if tp != "#" and (not tp.isupper() or tp.lower() in keys):
-    #                 q.append((steps+1, (nextposes, nkeys)))
 
     print(bigsteps)
     print(best)
