@@ -2,38 +2,40 @@ import array
 
 def execute_intcode(p, ip, relative_base, input, output, max):
     cnt = 0
+    instr = -1
+
+    def read(i):
+        mode = (instr // (10**(1+i))) % 10
+        if mode == 0:
+            addr = p[ip+i]
+        elif mode == 1:
+            addr = ip+i
+        elif mode == 2:
+            addr = p[ip+i] + relative_base
+        else:
+            raise RuntimeError('invalid mode')
+        if addr >= len(p):
+            return 0
+        return p[addr]
+
+    def write(i, v):
+        mode = (instr // (10**(1+i))) % 10
+        if mode == 0:
+            addr = p[ip+i]
+        elif mode == 2:
+            addr = p[ip+i] + relative_base
+        else:
+            raise RuntimeError('invalid mode')
+        if addr >= len(p):
+            p.extend([0]*(addr*8//7-len(p)))
+        p[addr] = v
+
     while ip >= 0:
         if max and cnt > max:
             break
         cnt += 1
 
         instr = p[ip]
-
-        def read(i):
-            mode = (instr // (10**(1+i))) % 10
-            if mode == 0:
-                addr = p[ip+i]
-            elif mode == 1:
-                addr = ip+i
-            elif mode == 2:
-                addr = p[ip+i] + relative_base
-            else:
-                raise RuntimeError('invalid mode')
-            if addr >= len(p):
-                p.extend([0]*addr)
-            return p[addr]
-
-        def write(i, v):
-            mode = (instr // (10**(1+i))) % 10
-            if mode == 0:
-                addr = p[ip+i]
-            elif mode == 2:
-                addr = p[ip+i] + relative_base
-            else:
-                raise RuntimeError('invalid mode')
-            if addr >= len(p):
-                p.extend([0]*addr)
-            p[addr] = v
 
         opc = instr % 100
         if opc == 1:
