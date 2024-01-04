@@ -55,7 +55,9 @@ def dijkstra(edges, start, target=None):
     explored = 0
     relaxed = 0
 
+    max_size = 0
     while todo and todo[0][-1][-1] != target:
+        max_size = max(max_size, len(todo))
         k, cur = heapq.heappop(todo)
         if k != cost[cur]:
             relaxed += 1
@@ -69,7 +71,7 @@ def dijkstra(edges, start, target=None):
                 cost[nbr] = ncost
                 heapq.heappush(todo, (ncost, nbr))
 
-    print(f'{explored=}, {relaxed=}')
+    print(f'{explored=}, {relaxed=}, {len(todo)=}, {max_size=}')
 
     last = None
     if todo:
@@ -131,6 +133,7 @@ def main(args):
     part2 = go(data, part1=False)
     print(part1)
     print(part2)
+
 
 if __name__ == '__main__':
     main(sys.argv)
