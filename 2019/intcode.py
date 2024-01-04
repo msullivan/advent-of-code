@@ -15,8 +15,10 @@ def execute_intcode(p, ip, relative_base, input, output, max):
                 addr = p[ip+i]
             elif mode == 1:
                 addr = ip+i
-            else:
+            elif mode == 2:
                 addr = p[ip+i] + relative_base
+            else:
+                raise RuntimeError('invalid mode')
             if addr >= len(p):
                 p.extend([0]*addr)
             return p[addr]
@@ -25,9 +27,10 @@ def execute_intcode(p, ip, relative_base, input, output, max):
             mode = (instr // (10**(1+i))) % 10
             if mode == 0:
                 addr = p[ip+i]
-            else:
-                assert mode == 2
+            elif mode == 2:
                 addr = p[ip+i] + relative_base
+            else:
+                raise RuntimeError('invalid mode')
             if addr >= len(p):
                 p.extend([0]*addr)
             p[addr] = v

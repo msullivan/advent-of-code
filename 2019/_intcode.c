@@ -50,22 +50,40 @@ static int mode_divs[] = { 0, 100, 1000, 10000 };
 static int64_t compute_addr(int64_t *mem, int i, int64_t instr, int64_t ip, int64_t relative_base) {
     // XXX: could this be better
     int mode = (instr / mode_divs[i]) % 10;
+    int64_t res;
     switch (mode) {
     case 0:
-        return mem[ip+i];
+        res = mem[ip+i];
+        break;
     case 1:
-        return ip+i;
+        res = ip+i;
+        break;
     case 2:
-        return mem[ip+i] + relative_base;
+        res = mem[ip+i] + relative_base;
+        break;
+    default:
+        PyErr_Format(PyExc_RuntimeError,
+                     "Invalid instruction mode %d in instr %d at ip=%d",
+                     mode, instr, ip);
+        return -1;
     }
-    abort();
+    if (res < 0) {
+        PyErr_Format(PyExc_RuntimeError,
+                     "Invalid negative address %d at ip=%d",
+                     res, ip);
+    }
+    return res;
 }
 
 static int64_t read_mem(int64_t *mem, ssize_t size, int64_t addr) {
-    return addr < 0 || addr >= size ? 0 : mem[addr];
+    return addr >= size ? 0 : mem[addr];
 }
 
-#define ADDR(i) compute_addr(mem, i, instr, ip, relative_base)
+#define ADDR(i) ({                                                      \
+        int64_t __res = compute_addr(mem, i, instr, ip, relative_base); \
+        if (__res < 0) goto err;                                        \
+        __res;                                                          \
+    })
 #define READ(i) read_mem(mem, size, ADDR(i))
 #define WRITE(i, v) do {                                                \
         int64_t __addr = ADDR(i);                                       \
