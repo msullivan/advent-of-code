@@ -41,6 +41,7 @@ def main(args):
     seen = {(sources, frozenset())}
 
     i = 0
+    explored = 0
 
     best = 100000000000000000000
     while bigq:
@@ -61,6 +62,7 @@ def main(args):
                 steps, (poses, keys) = q.popleft()
 
                 j += 1
+                explored += 1
                 # print(i, robot, steps, poses, keys)
                 for dir in DIRS:
                     nextpos = add(poses[robot], dir)
@@ -89,6 +91,7 @@ def main(args):
                     elif not tp.isupper() or tp.lower() in keys:
                         q.append((steps+1, (nextposes, nkeys)))
 
+    print(explored)
     print(bigsteps)
     print(best)
     os._exit(0)

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from collections import defaultdict, deque
+from collections import deque
 import heapq
 import sys
 
@@ -10,7 +10,9 @@ DIRS = [(0, -1), (1, 0), (0, 1), (-1, 0)]
 def add(v1, v2):
     return (v1[0] + v2[0], v1[1] + v2[1])
 
-
+# Trace out (via BFS) every direct source|key->key path, along with
+# whatever doors and keys they pass. This is used to determine edges
+# for a pass of Dijkstra's.
 def trace(board, sources):
     sources = list(sources)
     sources += [k for k, v in board.items() if v.islower()]
@@ -36,11 +38,13 @@ def trace(board, sources):
                     continue
                 seen.add(nextpos)
 
+                ndoors = doors
                 if tp.islower():
                     routes[source].add((nextpos, steps+1, doors))
-                    continue
+                    # Treat a key like a door: you can't pass a key without
+                    # picking it up. (This is a *big* optimization.)
+                    ndoors = doors | {tp}
 
-                ndoors = doors
                 if tp.isupper():
                     ndoors = doors | {tp.lower()}
 
@@ -109,7 +113,7 @@ def go(m, part1):
         # print(''.join(board[c] for c in poses), cur, '==================')
         for i, pos in enumerate(poses):
             for target, dist, doors in routes[pos]:
-                if doors.issubset(keys):
+                if board[target] not in keys and doors.issubset(keys):
                     nextposes = list(poses)
                     nextposes[i] = target
                     nextposes = tuple(nextposes)
