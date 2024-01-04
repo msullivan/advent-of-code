@@ -1,22 +1,20 @@
 #!/usr/bin/env python3
 
-from __future__ import print_function
-
 from collections import defaultdict, deque
+import os
 import sys
-import time
-import math
 
 DIRS = [(0, -1), (1, 0), (0, 1), (-1, 0)]
 
+
 def add(v1, v2):
-    return tuple(x + y for x, y in zip(v1, v2))
+    return (v1[0] + v2[0], v1[1] + v2[1])
 
 
 def main(args):
     data = [s.strip() for s in sys.stdin]
 
-    board = defaultdict(lambda: " ")
+    board = {}
     m = data
 
     for y in range(len(m)):
@@ -64,8 +62,13 @@ def main(args):
 
                 j += 1
                 # print(i, robot, steps, poses, keys)
-                for dir in range(0, 4):
-                    nextpos = add(poses[robot], DIRS[dir])
+                for dir in DIRS:
+                    nextpos = add(poses[robot], dir)
+                    tp = board[nextpos]
+
+                    if tp == '#':
+                        continue
+
                     # update
                     nextposes = list(poses)
                     nextposes[robot] = nextpos
@@ -80,16 +83,15 @@ def main(args):
 
                     seen.add((nextposes, nkeys))
 
-
-                    tp = board[nextpos]
                     if tp.islower() and tp not in keys:
                         bigq.append((steps+1, (nextposes, nkeys)))
                         # print("YEAAAH", bigq[-1], tp)
-                    elif tp != "#" and (not tp.isupper() or tp.lower() in keys):
+                    elif not tp.isupper() or tp.lower() in keys:
                         q.append((steps+1, (nextposes, nkeys)))
 
     print(bigsteps)
     print(best)
+    os._exit(0)
 
 
 if __name__ == '__main__':
