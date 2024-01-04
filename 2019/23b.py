@@ -118,14 +118,6 @@ class IntCode:
 
 import array
 
-DIRS = [(0, -1), (1, 0), (0, 1), (-1, 0)]
-
-def add(v1, v2):
-    return tuple(x + y for x, y in zip(v1, v2))
-
-evals = 0
-
-
 def main(args):
     data = [s.strip() for s in sys.stdin]
     p = array.array('q', [int(x) for x in data[0].split(",")])
@@ -157,7 +149,7 @@ def main(args):
             else:
                 computers[target].input.extend([x, y])
 
-#        print([(c.idle, c.input) for c in computers])
+        # print([(c.idle, c.input) for c in computers])
         if nat and all(c.idle and not c.input for c in computers):
             if lasty == nat[1]:
                 return

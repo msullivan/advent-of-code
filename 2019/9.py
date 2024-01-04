@@ -85,11 +85,13 @@ def main(args):
 
     outs = []
     run(p.copy(), 0, [1], outs)
-    print(outs)
+    assert len(outs) == 1, outs
+    print(outs[0])
 
     outs = []
     run(p.copy(), 0, [2], outs)
-    print(outs)
+    assert len(outs) == 1, outs
+    print(outs[0])
 
 
 if __name__ == '__main__':
