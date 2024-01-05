@@ -1,7 +1,7 @@
 import array
 import ctypes
 
-def execute_intcode(p, ip, relative_base, input, output, maxsteps, /):
+def execute_intcode(p, ip, relative_base, input, output, maxsteps, _cache, /):
     cnt = 0
     instr = -1
 
@@ -98,8 +98,13 @@ except ImportError as e:
 
 
 class IntCode:
-    def __init__(self, program, input = None, output = None):
+    @classmethod
+    def make_cache(cls, program):
+        return array.array('q', [-1]*len(program))
+
+    def __init__(self, program, input = None, output = None, cache = None):
         self.program = array.array('q', program)
+        self.cache = self.make_cache(program) if cache is None else cache
 
         self.ip = 0
         self.relative_base = 0
@@ -115,7 +120,7 @@ class IntCode:
         maxsteps = 0 if maxsteps is None else maxsteps
         self.ip, self.relative_base, cnt = execute_intcode(
             self.program, self.ip, self.relative_base, self.input, self.output,
-            maxsteps
+            maxsteps, self.cache
         )
         return cnt
 

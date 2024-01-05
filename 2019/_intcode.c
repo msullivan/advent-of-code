@@ -45,11 +45,33 @@ static int grow_array(PyObject *array, Py_buffer *buffer,
     return get_buffer(array, buffer, psize, pmem);
 }
 
+
+// 8 bits for instruction
+// 2 bits for each mode
+#define OP_BITS 8
+#define OP_MASK ((1 << OP_BITS)-1)
+#define MODE_BITS 2
+#define MODE_MASK ((1 << MODE_BITS)-1)
+
+
 static int mode_divs[] = { 0, 100, 1000, 10000 };
 
-static int64_t compute_addr(int64_t *mem, int i, int64_t instr, int64_t ip, int64_t relative_base) {
-    // XXX: could this be better
-    int mode = (instr / mode_divs[i]) % 10;
+static uint64_t translate(int64_t instr) {
+    if (instr == 99) {
+        return instr;
+    }
+
+    uint64_t res = instr % 10;
+    for (int i = 1; i <= 3; i++) {
+        int mode = (instr / mode_divs[i]) % 10;
+        res |= (mode << (OP_BITS + MODE_BITS*i));
+    }
+    return res;
+}
+
+
+static int64_t compute_addr(int64_t *mem, int i, uint64_t instr, int64_t ip, int64_t relative_base) {
+    int mode = (instr >> (OP_BITS + MODE_BITS * i)) & MODE_MASK;
     int64_t res;
     switch (mode) {
     case 0:
@@ -80,7 +102,7 @@ static int64_t read_mem(int64_t *mem, ssize_t size, int64_t addr) {
 }
 
 #define ADDR(i) ({                                                      \
-        int64_t __res = compute_addr(mem, i, instr, ip, relative_base); \
+        int64_t __res = compute_addr(mem, i, trans, ip, relative_base); \
         if (__res < 0) goto err;                                        \
         __res;                                                          \
     })
@@ -99,13 +121,18 @@ static int
 _execute_intcode(PyObject *program,
                  int64_t *p_ip, int64_t *p_relative_base,
                  PyObject *input, PyObject *output,
-                 int64_t *p_max_instrs)
+                 int64_t *p_max_instrs, PyObject *cacheobj)
 {
     Py_buffer buffer = { .buf = NULL };
+    Py_buffer cache_buffer = { .buf = NULL };
     ssize_t size;
     int64_t *mem;
 
     if (get_buffer(program, &buffer, &size, &mem) < 0) goto err;
+
+    ssize_t cache_size;
+    int64_t *cache;
+    if (get_buffer(cacheobj, &cache_buffer, &cache_size, &cache) < 0) goto err;
 
     int64_t ip = *p_ip;
     int64_t relative_base = *p_relative_base;
@@ -121,8 +148,17 @@ _execute_intcode(PyObject *program,
         if (max_instrs && cnt++ > max_instrs) break;
 
         int64_t instr = mem[ip];
+        uint64_t trans;
+        if (ip < cache_size && cache[ip] != -1) { /* XXX: check value? */
+            trans = cache[ip];
+        } else {
+            trans = translate(instr);
+            if (ip < cache_size) {
+                cache[ip] = trans;
+            }
+        }
 
-        switch (instr % 100) {
+        switch (trans & OP_MASK) {
         case 1:
             WRITE(3, READ(1) + READ(2));
             ip += 4;
@@ -178,7 +214,8 @@ _execute_intcode(PyObject *program,
             ip = -1;
             break;
         default:
-            PyErr_Format(PyExc_RuntimeError, "Invalid instruction %d at ip=%d", instr, ip);
+            PyErr_Format(PyExc_RuntimeError, "Invalid instruction %d/%x at ip=%d",
+                         instr, trans, ip);
             goto err;
         }
 
@@ -186,6 +223,7 @@ _execute_intcode(PyObject *program,
 out:
 
     PyBuffer_Release(&buffer);
+    PyBuffer_Release(&cache_buffer);
 
     *p_ip = ip;
     *p_relative_base = relative_base;
@@ -195,20 +233,21 @@ out:
 
 err:
     PyBuffer_Release(&buffer);
+    PyBuffer_Release(&cache_buffer);
     return -1;
 }
 
 static PyObject *
 execute_intcode(PyObject *self, PyObject *args)
 {
-    PyObject *program, *input, *output;
+    PyObject *program, *input, *output, *cache;
     int64_t ip, relative_base, max_instrs;
 
     if (!PyArg_ParseTuple(
-            args, "OLLOOL", &program, &ip, &relative_base, &input, &output, &max_instrs))
+            args, "OLLOOLO", &program, &ip, &relative_base, &input, &output, &max_instrs, &cache))
         return NULL;
 
-    int res = _execute_intcode(program, &ip, &relative_base, input, output, &max_instrs);
+    int res = _execute_intcode(program, &ip, &relative_base, input, output, &max_instrs, cache);
     if (res < 0)
         return NULL;
 

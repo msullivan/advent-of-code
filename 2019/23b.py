@@ -27,7 +27,8 @@ def main(args):
 
     N = 50
 
-    computers = [IntCode(p, input=ilist()) for i in range(N)]
+    cache = IntCode.make_cache(p)
+    computers = [IntCode(p, input=ilist(), cache=cache) for i in range(N)]
     for i in range(N):
         computers[i].input.l.append(i)
 

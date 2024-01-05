@@ -14,11 +14,12 @@ def add(v1, v2):
     return tuple(x + y for x, y in zip(v1, v2))
 
 evals = 0
+cache = None
 
 def inside(p, x, y):
     global evals
     evals += 1
-    interp = IntCode(p)
+    interp = IntCode(p, cache=cache)
     out = interp.run([x, y])
     return bool(out[0])
 
@@ -30,6 +31,8 @@ def box(p, x, y, sz):
 def main(args):
     data = [s.strip() for s in sys.stdin]
     p = array.array('q', [int(x) for x in data[0].split(",")] + [0]*50)
+    global cache
+    cache = IntCode.make_cache(p)
     board = defaultdict(lambda: " ")
 
     # Part 1
@@ -37,7 +40,7 @@ def main(args):
     cnt = 0
     for x in range(50):
         for y in range(50):
-            interp = IntCode(p)
+            interp = IntCode(p, cache=cache)
             out = interp.run([x, y])
             cnt += out[0]
             board[(x, y)] = "#" if out[0] else "."
