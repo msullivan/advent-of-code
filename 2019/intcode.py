@@ -85,6 +85,8 @@ def execute_intcode(p, ip, relative_base, input, output, maxsteps, /):
             ip += 2
         elif opc == 99:
             ip = -1
+        else:
+            raise AssertionError(f'invalid opcode {instr}/{opc} at {ip}')
 
     return ip, relative_base, cnt
 
