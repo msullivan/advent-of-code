@@ -152,6 +152,7 @@ def main(args):
         # print([(c.idle, c.input) for c in computers])
         if nat and all(c.idle and not c.input for c in computers):
             if lasty == nat[1]:
+                print(lasty)
                 return
             lasty = nat[1]
             computers[0].input.extend(nat)
