@@ -101,24 +101,26 @@ class IntCode:
 
         self.ip = 0
         self.relative_base = 0
-        self.input = input or []
-        self.output = output or []
+        self.input = input if input is not None else []
+        self.output = output if output is not None else []
         self.spew = False
 
     @property
     def done(self):
         return self.ip == -1
 
-    def execute(self, max=None):
-        max = 0 if max is None else max
+    def execute(self, maxsteps=None):
+        maxsteps = 0 if maxsteps is None else maxsteps
         self.ip, self.relative_base, cnt = execute_intcode(
-            self.program, self.ip, self.relative_base, self.input, self.output, max
+            self.program, self.ip, self.relative_base, self.input, self.output,
+            maxsteps
         )
-        if max and cnt >= max:
-            raise ValueError('ran too long', cnt)
+        return cnt
 
-    def run(self, input, max=None):
+    def run(self, input, maxsteps=None):
         self.input = input
         self.output = []
-        self.execute(max)
+        cnt = self.execute(maxsteps)
+        if maxsteps and cnt >= maxsteps:
+            raise ValueError('ran too long', cnt)
         return self.output
