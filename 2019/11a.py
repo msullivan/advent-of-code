@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+# N.B: PRESERVED FOR POSTERITY: relative_base is not preserved across
+# calls and somehow it works! (It did not work for part 2.)
+
 import sys
 import re
 import time
