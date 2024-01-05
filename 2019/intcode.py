@@ -1,4 +1,5 @@
 import array
+import ctypes
 
 def execute_intcode(p, ip, relative_base, input, output, max):
     cnt = 0
@@ -28,7 +29,12 @@ def execute_intcode(p, ip, relative_base, input, output, max):
             raise RuntimeError('invalid mode')
         if addr >= len(p):
             p.extend([0]*(addr*8//7-len(p)))
-        p[addr] = v
+
+        # Very stupid workaround for a dumb benchmark thing.
+        try:
+            p[addr] = v
+        except OverflowError:
+            p[addr] = ctypes.c_int64(v).value
 
     while ip >= 0:
         if max and cnt > max:
