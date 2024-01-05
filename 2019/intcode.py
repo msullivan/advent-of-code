@@ -1,7 +1,7 @@
 import array
 import ctypes
 
-def execute_intcode(p, ip, relative_base, input, output, max):
+def execute_intcode(p, ip, relative_base, input, output, maxsteps, /):
     cnt = 0
     instr = -1
 
@@ -37,7 +37,7 @@ def execute_intcode(p, ip, relative_base, input, output, max):
             p[addr] = ctypes.c_int64(v).value
 
     while ip >= 0:
-        if max and cnt > max:
+        if maxsteps and cnt > maxsteps:
             break
         cnt += 1
 
