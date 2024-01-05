@@ -12,7 +12,7 @@ ALL_DIRS = [(x, y) for x in [-1,0,1] for y in [-1,0,1] if not x == y == 0]
 
 def turn(v, d='left'):
     n = -1 if d == 'left' else 1
-    return VDIRS[(VDIRS.index(v) + n + len(VDIRS))%len(VDIRS)]
+    return VDIRS[(VDIRS.index(v) + n)%len(VDIRS)]
 
 
 ##############################
