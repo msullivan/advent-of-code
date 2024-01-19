@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 
+# 3.5m without the toobigs optimization
+# 150ms with it
+
 import sys
 import math
+import operator, functools
 
 
 def consts(cmds):
@@ -17,6 +21,9 @@ def func(consts, z, w):
 
     return z
 
+def product(l):
+    return functools.reduce(operator.mul, l)
+
 def code(seen, k):
     digits = []
     while k in seen:
@@ -31,6 +38,12 @@ def solve(parts, minimize):
     for c in cparts:
         print(c)
 
+    # the function divides by a, and c is always positive, so the divides by a
+    # are the only way z gets smaller; we can use this fact to do pruning when
+    # z is too big to be eliminated by the remaining divisions
+    toobigs = (
+        [product([a for a, _, _ in cparts[i:]]) for i in range(len(cparts))] + [0])
+
     seen = {}
     todo = [(0, 0)]
     while todo:
@@ -38,12 +51,14 @@ def solve(parts, minimize):
         if idx < 6:
             print(len(todo), code(seen, (idx, z)), idx, z)
         if idx == len(parts) and z == 0:
-            print("GOT IT")
             break
         if idx >= len(parts):
             continue
         for digit in rng:
             nz = func(cparts[idx], z, digit)
+            # addition is to deal with truncating I guess
+            if nz > toobigs[idx+1] + len(parts):
+                continue
             k = (idx+1, nz)
             if k not in seen:
                 seen[k] = (digit, (idx, z))

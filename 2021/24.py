@@ -5,19 +5,26 @@
 00:29 < sully> "A sword day, a red day."
 """
 
+# I can't remember if this ever worked in 2021. I think maybe not, and
+# I used the "honest" versions? When I was playing around with it in
+# 2024 it run for 90 minutes without finishing, and then I tried using
+# BitVec instead and it became fast.
+
 import sys
 import z3
 
 
-def test(x, b):
-    return isinstance(x, int) and x == b
+NB = 32
+def bv(n):
+    return z3.BitVecVal(n, NB)
+
 
 def eval(cmds, regs, inp):
     def r2(x):
         if x.isalpha():
             return regs[x]
         else:
-            return int(x)
+            return bv(int(x))
 
     for cmd in cmds:
         x, *rest = cmd.split(" ")
@@ -27,21 +34,15 @@ def eval(cmds, regs, inp):
         a, b = rest
 
         if x == 'add':
-            if not test(r2(b), 0):
-                regs[a] = regs[a] + r2(b)
+            regs[a] = regs[a] + r2(b)
         elif x == 'mul':
-            if test(r2(b), 0):
-                regs[a] = 0
-            else:
-                if not test(r2(b), 1):
-                    regs[a] = regs[a] * r2(b)
+            regs[a] = regs[a] * r2(b)
         elif x == 'div':
-            if not test(r2(b), 1):
-                regs[a] = regs[a] / r2(b)
+            regs[a] = regs[a] / r2(b)
         elif x == 'mod':
             regs[a] = regs[a] % r2(b)
         elif x == 'eql':
-            regs[a] = z3.If(regs[a] == r2(b), 1, 0)
+            regs[a] = z3.If(regs[a] == r2(b), bv(1), bv(0))
 
 
 def solve(cmds, func):
@@ -55,10 +56,10 @@ def solve(cmds, func):
     parts.append(cur)
 
     digits = []
-    regs = {k: 0 for k in 'wxyz'}
+    regs = {k: bv(0) for k in 'wxyz'}
     opt = z3.Optimize()
     for i, part in enumerate(parts):
-        digit = z3.Int(f'd{i}')
+        digit = z3.BitVec(f'd{i}', NB)
         digits.append(digit)
         opt.add(1 <= digit)
         opt.add(digit <= 9)

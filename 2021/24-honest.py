@@ -2,6 +2,7 @@
 
 # This is very slow, though with the as_df suggested z threshold it is
 # fine? Is that legit??
+# 18m without, 27s with it
 
 import sys
 import math
@@ -61,7 +62,7 @@ def solve(parts, minimize):
             continue
         for digit in rng:
             nz = run(parts[idx], z, digit)
-            # XXX: as_df suggested this;; why (is) it sound?
+            # XXX: as_df suggested this;; this is probably not quite sound
             # if nz > 26**5:
             #     continue
             k = (idx+1, nz)
