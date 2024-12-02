@@ -13,13 +13,14 @@ def main(args):
     data = [extract(s.rstrip('\n')) for s in file]
 
     # ... I couldn't remember the unzip trick
-    xs, ys = [], []
-    for x, y in data:
-        xs.append(x)
-        ys.append(y)
+    # xs, ys = [], []
+    # for x, y in data:
+    #     xs.append(x)
+    #     ys.append(y)
+    xs, ys = zip(*data)
 
-    xs.sort()
-    ys.sort()
+    xs = sorted(xs)
+    ys = sorted(ys)
 
     asdf = Counter(ys)
 
