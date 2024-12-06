@@ -1,12 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
-from collections import defaultdict, Counter, deque
-import re
-import math
-
-def extract(s):
-    return [int(x) for x in re.findall(r'(-?\d+).?', s)]
+from collections import defaultdict
 
 def vadd(v1, v2):
     if len(v1) == 2:
@@ -16,43 +11,22 @@ def vadd(v1, v2):
     else:
         return tuple([x + y for x, y in zip(v1, v2)])
 
-def ichr(i):
-    return chr(ord('a') + i)
-
-def iord(c):
-    return ord(c.lower()) - ord('a')
-
-def optidx(d, opt=max, nth=0):
-    if not isinstance(d, dict):
-        d = dict(enumerate(d))
-    rv = opt(d.values())
-    return [i for i, v in d.items() if v == rv][nth], rv
-
-LETTERS = "abcdefghijklmnopqrstuvwxyz"
-
 UP, RIGHT, DOWN, LEFT = VDIRS = (0, -1), (1, 0), (0, 1), (-1, 0),
-DIRS = {'N': UP, 'E': RIGHT, 'S': DOWN, 'W': LEFT }
-ALL_DIRS = [(x, y) for x in [-1,0,1] for y in [-1,0,1] if not x == y == 0]
 
 def turn(v, d='left'):
     n = -1 if d == 'left' else 1
     return VDIRS[(VDIRS.index(v) + n) % len(VDIRS)]
 
 
-##############################
-
-def _try(m, pos, fuck):
-    # print(pos)
+def _try(m, pos, obstacle):
     m = m.copy()
-    m[fuck] = '#'
+    m[obstacle] = '#'
 
     seen = set()
     dir = UP
     while m[pos] != 'O':
-        # print(pos, dir)
         if (pos, dir) in seen:
-            # print("!!!!")
-            return True
+            return seen, True
         seen.add((pos, dir))
         nxt = vadd(dir, pos)
         if m[nxt] == '#':
@@ -60,14 +34,11 @@ def _try(m, pos, fuck):
         else:
             pos = nxt
 
-    return False
-
+    return seen, False
 
 
 def main(args):
     file = open(args[1]) if len(args) > 1 else sys.stdin
-    # data = [x.rstrip('\n').split('\n') for x in file.read().split('\n\n')]
-    # data = [int(s.rstrip('\n')) for s in file]
     data = [s.rstrip('\n') for s in file]
 
 
@@ -78,24 +49,22 @@ def main(args):
             if c == '^':
                 pos = x, y
 
-    print(len(m))
+    seen_all, _ = _try(m, pos, (-1, -1))
+    seen = {x for x, _ in seen_all}
 
     n = 0
     i = 0
     for spot, c in m.items():
-        i += 1
+        # This optimization wasn't in the original solution
+        if spot not in seen:
+            continue
         if spot != pos and c == '.':
-            print(i, spot)
-            if _try(m, pos, spot):
+            i += 1
+            # print(i, spot)
+            _, ok = _try(m, pos, spot)
+            if ok:
                 n += 1
-    # print(m)
-    # m[pos] = '.'
-    # print(pos)
-
-    # print(_try(m, pos, (3, 6)))
-
-
-    # print(len(seen))
+    print(len(seen))
     print(n)
 
 
