@@ -5,6 +5,7 @@ from collections import defaultdict, Counter, deque
 from parse import parse
 import re
 import math
+import itertools
 
 def extract(s):
     return [int(x) for x in re.findall(r'(-?\d+).?', s)]
