@@ -1,63 +1,25 @@
 #!/usr/bin/env python3
 
 import sys
-from collections import defaultdict, Counter, deque
-from parse import parse
+from collections import defaultdict
 import re
-import math
-import itertools
 
 def extract(s):
     return [int(x) for x in re.findall(r'(-?\d+).?', s)]
 
-def vadd(v1, v2):
-    if len(v1) == 2:
-        return v1[0] + v2[0], v1[1] + v2[1]
-    elif len(v1) == 2:
-        return v1[0] + v2[0], v1[1] + v2[1], v1[2] + v2[2]
-    else:
-        # ... this is so slow.
-        return tuple([x + y for x, y in zip(v1, v2)])
-
-def ichr(i):
-    return chr(ord('a') + i)
-
-def iord(c):
-    return ord(c.lower()) - ord('a')
-
-def optidx(d, opt=max, nth=0):
-    if not isinstance(d, dict):
-        d = dict(enumerate(d))
-    rv = opt(d.values())
-    return [i for i, v in d.items() if v == rv][nth], rv
-
-LETTERS = "abcdefghijklmnopqrstuvwxyz"
-
-UP, RIGHT, DOWN, LEFT = VDIRS = (0, -1), (1, 0), (0, 1), (-1, 0),
-DIRS = {'N': UP, 'E': RIGHT, 'S': DOWN, 'W': LEFT }
-ALL_DIRS = [(x, y) for x in [-1,0,1] for y in [-1,0,1] if not x == y == 0]
-
-def turn(v, d='left'):
-    n = -1 if d == 'left' else 1
-    return VDIRS[(VDIRS.index(v) + n) % len(VDIRS)]
-
-
-##############################
 
 def main(args):
     file = open(args[1]) if len(args) > 1 else sys.stdin
-    # data = [x.rstrip('\n').split('\n') for x in file.read().split('\n\n')]
-    # data = [int(s.rstrip('\n')) for s in file]
     data = [s.rstrip('\n') for s in file]
 
     l = extract(data[0])
 
-    m = defaultdict(lambda: 0)
+    m = defaultdict(int)
     for x in l:
-        m[x] = 1
+        m[x] += 1
 
     for i in range(75):
-        nm = defaultdict(lambda: 0)
+        nm = defaultdict(int)
         for x, cnt in m.items():
             sx = str(x)
             if x == 0:
@@ -69,8 +31,11 @@ def main(args):
                 nm[x*2024] += cnt
 
         m = nm
+        if i == 25-1:
+            p1 = sum(m.values())
 
-    print(sum(nm.values()))
+    print(p1)
+    print(sum(m.values()))
 
 if __name__ == '__main__':
     main(sys.argv)
