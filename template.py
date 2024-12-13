@@ -6,6 +6,7 @@ from parse import parse
 import re
 import math
 import itertools
+import heapq
 
 def extract(s):
     return [int(x) for x in re.findall(r'(-?\d+).?', s)]
@@ -36,6 +37,9 @@ LETTERS = "abcdefghijklmnopqrstuvwxyz"
 UP, RIGHT, DOWN, LEFT = VDIRS = (0, -1), (1, 0), (0, 1), (-1, 0),
 DIRS = {'N': UP, 'E': RIGHT, 'S': DOWN, 'W': LEFT }
 ALL_DIRS = [(x, y) for x in [-1,0,1] for y in [-1,0,1] if not x == y == 0]
+
+def gnbrs(s, dirs=VDIRS):
+    return [(dir, vadd(s, dir)) for dir in dirs]
 
 def turn(v, d='left'):
     n = -1 if d == 'left' else 1

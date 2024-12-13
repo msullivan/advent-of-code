@@ -26,6 +26,7 @@ def draw(painted):
 
 import heapq
 # This is A* if you pass a heuristic and a target, otherwise Dijkstra's
+# edges should return a sequence of (nbr, weight) pairs
 def dijkstra(m, edges, start, heuristic=None, target=None):
     cost = {start: 0}
     path = {}
@@ -72,3 +73,39 @@ def binary_search(pred, lo, hi=None):
             lo = mid + 1
 
     return lo
+
+
+if False:
+    #### Read grid
+    m = defaultdict(lambda: '.')
+    for y, l in enumerate(data):
+        for x, c in enumerate(l):
+            m[x,y] = c
+
+
+    # DFS
+    seen = set()
+    q = [start]
+    while q:
+        node = q.pop()
+        for _, nbr in gnbrs(node):  # ??
+            if (
+                nbr not in seen
+                # and ...
+            ):
+                q.append(nbr)
+                seen.add(nbr)
+
+
+    # BFS
+    seen = set()
+    q = collections.deque([start])
+    while q:
+        node = q.popleft()
+        for _, nbr in gnbrs(node):  # ??
+            if (
+                nbr not in seen
+                # and ...
+            ):
+                q.append(nbr)
+                seen.add(nbr)
