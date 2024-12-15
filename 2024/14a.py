@@ -2,7 +2,7 @@
 
 import sys
 from collections import defaultdict, Counter, deque
-# from parse import parse
+from parse import parse
 import re
 import math
 import itertools
@@ -54,7 +54,40 @@ def main(args):
     # data = [int(s.rstrip('\n')) for s in file]
     data = [s.rstrip('\n') for s in file]
 
-    print(data)
+    ps = []
+    vs = []
+    for line in data:
+        a, b, c, d = extract(line)
+        ps.append((a, b))
+        vs.append((c, d))
+
+    W = 101
+    H = 103
+    #11 7
+
+    print(ps)
+    print(vs)
+    for i in range(100):
+        nps = []
+        for p, v in zip(ps, vs):
+            a, b = vadd(p, v)
+            np = (a % W, b % H)
+            nps.append(np)
+
+        ps = nps
+
+    q1 = q2 = q3 = q4 = 0
+    for x, y in nps:
+        if x < W//2 and y < H//2:
+            q1 += 1
+        elif x < W//2 and y > H//2:
+            q2 += 1
+        elif x > W//2 and y > H//2:
+            q3 += 1
+        elif x > W//2 and y < H//2:
+            q4 += 1
+
+    print(q1*q2*q3*q4)
 
 if __name__ == '__main__':
     main(sys.argv)
