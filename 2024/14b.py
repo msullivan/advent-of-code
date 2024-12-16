@@ -47,6 +47,7 @@ def draw_img(painted):
         if c == '#':
             array[pos] = 255
 
+    array = array.transpose((1, 0))  # numpy and pillow disagree
     im = Image.fromarray(array)
     return im
 
