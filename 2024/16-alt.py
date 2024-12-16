@@ -17,7 +17,7 @@ def turn(v, d='left'):
 
 def dijkstra_funny(m, edges, start, target=None, heuristic=None):
     cost = {start: 0}
-    path = {start: frozenset()}
+    path = {}
     todo = [(0, 0, start)]
     explored = 0
 
@@ -32,11 +32,11 @@ def dijkstra_funny(m, edges, start, target=None, heuristic=None):
             ncost = cost[cur] + weight
             if nbr not in cost or ncost < cost[nbr]:
                 cost[nbr] = ncost
-                path[nbr] = path[cur] | frozenset([cur])
+                path[nbr] = [cur]
                 hcost = ncost if not heuristic else ncost + heuristic(nbr)
                 heapq.heappush(todo, (hcost, ncost, nbr))
             elif ncost == cost[nbr]:
-                path[nbr] |= path[cur] | frozenset([cur])
+                path[nbr].append(cur)
 
     return cost, path
 
@@ -81,8 +81,17 @@ def main(args):
 
     best_score = c[end, None]
 
-    on_path = {pos for pos, _ in ps[end, None]}
-    on_path.add(end)
+    seen = set()
+    def collect(nobe):
+        if nobe in seen:
+            return
+        seen.add(nobe)
+        if nobe in ps:
+            for nbr in ps[nobe]:
+                collect(nbr)
+    collect((end, None))
+
+    on_path = {pos for pos, _ in seen}
 
     print(c[end, None])
     print(len(on_path))
