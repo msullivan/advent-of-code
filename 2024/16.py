@@ -60,8 +60,6 @@ def main(args):
 
     pos = start, RIGHT
 
-    reverse = False
-
     def nbrs(m, cur):
         pos, dir = cur
         if dir is None:
@@ -73,8 +71,6 @@ def main(args):
             yield (pos, None), 0
 
         d2 = dir
-        if reverse:
-            d2 = turn(turn(dir))
         x = vadd(pos, d2)
         if m[x] == '.':
             yield (x, dir), 1
@@ -84,14 +80,13 @@ def main(args):
 
 
     c, _ = dijkstra(m, nbrs, pos)
-    reverse = True
     cr, _ = dijkstra(m, nbrs, (end, None))
 
     best_score = c[end, None]
 
     on_path = set()
     for (pos, dir), score in c.items():
-        if score + cr[pos, dir] == best_score:
+        if dir and score + cr[pos, turn(turn(dir))] == best_score:
             on_path.add(pos)
 
     print(c[end, None])
