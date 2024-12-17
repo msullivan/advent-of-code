@@ -25,7 +25,7 @@ def run(program, regs, a=None):
         op = program[ip]
         val = program[ip+1]
         if op == 0:
-            regs[0] = (regs[0] // (1 << combo(val)))
+            regs[0] = regs[0] >> combo(val)
         elif op == 1:
             regs[1] ^= val
         elif op == 2:
@@ -39,9 +39,9 @@ def run(program, regs, a=None):
         elif op == 5:
             out.append(combo(val) & M)
         elif op == 6:
-            regs[1] = (regs[0] // (1 << combo(val)))
+            regs[1] = regs[0] >> combo(val)
         elif op == 7:
-            regs[2] = (regs[0] // (1 << combo(val)))
+            regs[2] = regs[0] >> combo(val)
         ip += 2
 
     return out
@@ -49,14 +49,14 @@ def run(program, regs, a=None):
 
 def encode(num, i, program):
     """
-    Based on the program:
+    Original version was based onbased on the program:
 
     B = A & 7
     B = B ^ 1
-    C = A // 2**B
+    C = A >> B
     B = B ^ C
     B = B ^ 4
-    A = A // 8
+    A = A >> 3
     OUT(B & 7)
     jnz A 0
     """
@@ -67,15 +67,21 @@ def encode(num, i, program):
     val = program[i]
     # print(i, val, num)
     for ib in range(8):
-        # I should have reused run to do this instead of coding it
-        # myself and screwing it up repeatedly.
-        # But still, **39 so.
         nnum = (num << 3) | ib
-        b = ib ^ 1
-        c = nnum // (1 << b)
-        b ^= c
-        b ^= 4
-        if (b&7) == val:
+        # I should have reused run to do this in the first place
+        # instead of coding it myself and screwing it up repeatedly.
+        # But still, **39 so.
+
+        out = run(program[:-2], [nnum, 0, 0])[0]
+
+        # Original solution did:
+        # b = ib ^ 1
+        # c = nnum >> b
+        # b ^= c
+        # b ^= 4
+        # out = b & 7
+
+        if out == val:
             ok = encode(nnum, i-1, program)
             if ok is not None:
                 return ok
