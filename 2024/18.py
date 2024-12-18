@@ -65,11 +65,14 @@ def binary_search(pred, lo, hi=None):
     return lo
 
 
+import time
 def main(args):
+    t0 = time.time()
     file = open(args[1]) if len(args) > 1 else sys.stdin
     data = [s.rstrip('\n') for s in file]
     data = [tuple(extract(l)) for l in data]
 
+    N = 1024
     M = 70
 
     def nbrs(m, p):
@@ -78,20 +81,22 @@ def main(args):
                 yield n, 1
 
     start = 0, 0
+    end = M, M
 
-    ds, _ = dijkstra(set(data[:1024]), nbrs, start)
-    p1 = ds[M, M]
+    ds, _ = dijkstra(set(data[:N]), nbrs, start)
+    p1 = ds[end]
 
     def check(n):
         print('==', n)
         m = set(data[:n+1])
         ds, _ = dijkstra(m, nbrs, start)
-        return (M, M) not in ds
+        return end not in ds
 
-    i = binary_search(check, 0, len(data))
+    i = binary_search(check, N, len(data))
     print(i)
     x, y = data[i]
 
+    print(f'{time.time() - t0:.3f}')
     print(p1)
     print(f'{x},{y}')
 
