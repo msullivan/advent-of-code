@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import sys
-from collections import defaultdict, Counter, deque
 import re
 import heapq
 
@@ -75,35 +74,29 @@ def binary_search(pred, lo, hi=None):
 def main(args):
     file = open(args[1]) if len(args) > 1 else sys.stdin
     data = [s.rstrip('\n') for s in file]
-
-    def load(n):
-        m = defaultdict(lambda: '.')
-        for entry in data[:n]:
-            x, y = extract(entry)
-            m[x,y] = '#'
-        return m
+    data = [tuple(extract(l)) for l in data]
 
     M = 70
 
     def nbrs(m, p):
         for _, n in gnbrs(p):
-            if 0 <= n[0] <= M and 0 <= n[1] <= M and m[n] == '.':
+            if 0 <= n[0] <= M and 0 <= n[1] <= M and n not in m:
                 yield n, 1
 
     start = 0, 0
 
-    ds, _ = dijkstra(load(1024), nbrs, start)
+    ds, _ = dijkstra(set(data[:1024]), nbrs, start)
     p1 = ds[M, M]
 
     def check(n):
         print('==', n)
-        m = load(n + 1)
+        m = set(data[:n+1])
         ds, _ = dijkstra(m, nbrs, start)
         return (M, M) not in ds
 
     i = binary_search(check, 0, len(data))
     print(i)
-    x, y = extract(data[i])
+    x, y = data[i]
 
     print(p1)
     print(f'{x},{y}')
