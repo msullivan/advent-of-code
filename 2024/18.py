@@ -48,16 +48,40 @@ def dijkstra(m, edges, start, heuristic=None, target=None):
     return cost, path
 
 
+def binary_search(pred, lo, hi=None):
+    """Finds the first n in [lo, hi) such that pred(n) holds.
+
+    hi == None -> infty
+    """
+    # assert not pred(lo)
+
+    if hi is None:
+        hi = max(lo, 1)
+        while not pred(hi):
+            hi *= 2
+
+    # assert pred(hi)
+
+    while lo < hi:
+        mid = (lo + hi) // 2
+        if pred(mid):
+            hi = mid
+        else:
+            lo = mid + 1
+
+    return lo
+
+
 def main(args):
     file = open(args[1]) if len(args) > 1 else sys.stdin
-    # data = [x.rstrip('\n').split('\n') for x in file.read().split('\n\n')]
-    # data = [int(s.rstrip('\n')) for s in file]
     data = [s.rstrip('\n') for s in file]
 
-    m = defaultdict(lambda: '.')
-    for entry in data[:1024]:
-        x, y = extract(entry)
-        m[x,y] = '#'
+    def load(n):
+        m = defaultdict(lambda: '.')
+        for entry in data[:n]:
+            x, y = extract(entry)
+            m[x,y] = '#'
+        return m
 
     M = 70
 
@@ -68,16 +92,18 @@ def main(args):
 
     start = 0, 0
 
-    ds, _ = dijkstra(m, nbrs, start)
+    ds, _ = dijkstra(load(1024), nbrs, start)
     p1 = ds[M, M]
 
-    for i in range(1024, len(data)):
-        # print(i)
-        x, y = extract(data[i])
-        m[x,y] = '#'
+    def check(n):
+        print('==', n)
+        m = load(n + 1)
         ds, _ = dijkstra(m, nbrs, start)
-        if (M, M) not in ds:
-            break
+        return (M, M) not in ds
+
+    i = binary_search(check, 0, len(data))
+    print(i)
+    x, y = extract(data[i])
 
     print(p1)
     print(f'{x},{y}')
