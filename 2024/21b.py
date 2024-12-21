@@ -102,21 +102,25 @@ def main(args):
     MAPS = [(num_costs, rnum)] + [(dir_costs, rdir)] * 25
 
     @functools.cache
-    def go(i, csrc, ctgt):
+    def go(csrc, ctgt, i):
         if i == len(MAPS):
             return 1
         cost, rm = MAPS[i]
         src, tgt = rm[csrc], rm[ctgt]
         min_path = float('inf')
         for path in gets(cost, src, tgt):
-            pos = 'A'
-            spath = 0
-            for c in path + 'A':
-                spath += go(i+1, pos, c)
-                pos = c
+            spath = go_str(path + 'A', i+1)
             min_path = min(spath, min_path)
 
         return min_path
+
+    def go_str(path, i):
+        pos = 'A'
+        spath = 0
+        for c in path:
+            spath += go(pos, c, i)
+            pos = c
+        return spath
 
     res = 0
     for line in data:
@@ -124,12 +128,7 @@ def main(args):
         print('=', line)
         num = int(''.join(c for c in line if c.isnumeric()))
 
-        pos = 'A'
-        spath = 0
-        for c in line:
-            spath += go(0, pos, c)
-            pos = c
-
+        spath = go_str(line, 0)
         res += spath * num
 
     print(res)
