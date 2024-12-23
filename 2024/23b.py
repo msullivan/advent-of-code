@@ -16,17 +16,7 @@ def main(args):
         m[y].add(x)
 
 
-    trips = set()
-    for nobe in m:
-        for nbr in m[nobe]:
-            for nbr2 in m[nobe]:
-                if nbr == nbr2:
-                    continue
-                if nbr2 in m[nbr]:
-                    trips.add(frozenset([nobe, nbr, nbr2]))
-
-
-    cliques = trips
+    cliques = {frozenset([c]) for c in m}
     while len(cliques) > 1:
         print(len(list(cliques)[0]), len(cliques))
         ncliques = set()
