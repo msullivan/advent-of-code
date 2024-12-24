@@ -7,11 +7,12 @@ def bron_kerbosch(r, p, x, n, out):
     if not p and not x:
         out.append(frozenset(r))
 
-    for v in p:
+    for v in list(p):
         bron_kerbosch(r | {v}, p & n[v], x & n[v], n, out)
-        p = p - {v}
-        x = x | {v}
-
+        p.discard(v)
+        x.add(v)
+        # p = p - {v}
+        # x = x | {v}
 
 
 def main(args):
@@ -27,7 +28,7 @@ def main(args):
 
 
     cliques = []
-    bron_kerbosch(frozenset(), frozenset(m), frozenset(), m, cliques)
+    bron_kerbosch(set(), set(m), set(), m, cliques)
 
     x = ','.join(sorted(list(cliques)[0]))
     print(x)
