@@ -129,7 +129,6 @@ def main(args):
     evals[ex1], evals[ex2] = evals[ex2], evals[ex1]
     flipped.extend([ex1, ex2])
 
-
     # Print it out
     ordering = analyze(evals)
     for v in ordering:
@@ -139,7 +138,9 @@ def main(args):
             print()
 
 
-    test(evals, 44)
+    for i in range(44):
+        print('==', i)
+        test(evals, i)
 
     print(','.join(sorted(flipped)))
 
