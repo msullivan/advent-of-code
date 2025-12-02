@@ -4,6 +4,7 @@ import Data.Maybe
 import qualified Data.Char as C
 import qualified Data.Map as Map
 import qualified Data.Set as Set
+import Debug.Trace
 
 ------
 iread :: String -> Int
@@ -34,6 +35,22 @@ ireadOut = readOut
 
 --------
 
-solve lines = 0
+traceShow' s = traceShow s s
 
-main = answer $ solve . lines
+step (pos, (cnt1, cnt2)) line =
+  let m = if head line == 'L' then (-1) else 1
+      n = iread $ tail line
+      npos = (pos + m*n)
+      pos' = npos `mod` 100
+  in
+    (
+      pos',
+      (
+        cnt1 + (if pos' == 0 then 1 else 0),
+        cnt2 + (if pos /= 0 && npos <= 0 then 1 else 0) + ((abs npos) `div` 100)
+      )
+    )
+
+solve lines = foldl step (50, (0, 0)) lines
+
+main = answer $ snd . solve . lines
