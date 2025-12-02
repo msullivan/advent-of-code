@@ -37,10 +37,12 @@ ireadOut = readOut
 
 traceShow' s = traceShow s s
 
-step (pos, (cnt1, cnt2)) line =
-  let m = if head line == 'L' then (-1) else 1
-      n = iread $ tail line
-      npos = (pos + m*n)
+parse line = (m, n)
+  where m = if head line == 'L' then (-1) else 1
+        n = iread $ tail line
+
+step (pos, (cnt1, cnt2)) (m, n) =
+  let npos = (pos + m*n)
       pos' = npos `mod` 100
   in
     (
@@ -53,4 +55,4 @@ step (pos, (cnt1, cnt2)) line =
 
 solve lines = foldl step (50, (0, 0)) lines
 
-main = answer $ snd . solve . lines
+main = answer $ snd . solve . map parse . lines
