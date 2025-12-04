@@ -22,3 +22,10 @@ mjolt l = grid ! (0, 12)
 solve lines = sum $ map mjolt lines
 
 main = answer $ solve . lines
+
+
+--      memoize f = lookup where
+--        cache1 = f []
+--        cache2 = memoize $ \x -> memoize $ \xs -> f (x:xs)
+--        lookup [] = cache1
+--        lookup (x:xs) = cache2 x xs
