@@ -1,6 +1,17 @@
+-- automatic function memoization using laziness
+-- essentially builds implicit lazy (potentially infinite) search trees
+-- inspired by https://hackage.haskell.org/package/memoize-1.1.2/docs/Data-Function-Memoize.html
+-- but simplified for educational purposes.
+
+-- Interestingly, in the one test I've done, memoizing a recursive
+-- function that takes (Int, Int), this was actually about 10% faster
+-- than the memoize package.  Possibly their more complex explicit-tree based
+-- implementation for Int isn't actually better than the dumb thing I do!
+
 module Memoize where
 
-import Data.List
+import Data.List (uncons)
+import Data.Bool (bool)
 
 class Memoize a where
   memoize :: (a -> v) -> a -> v
@@ -8,8 +19,6 @@ class Memoize a where
 memoFix :: Memoize a => ((a -> v) -> a -> v) -> a -> v
 memoFix ff = f
   where f = memoize (ff f)
-
---
 
 -- Core memoization primitives for unit, product, and sums.
 
@@ -39,33 +48,30 @@ instance (Memoize a, Memoize b) => Memoize (Either a b) where
           mf (Left x) = fl x
           mf (Right x) = fr x
 
-
 ----
 
 instance Memoize Bool where
   -- Bool <=> Either () ()
   memoize f = memoize (f . eitherToBool) . boolToEither
-    where boolToEither x = if x then Right () else Left ()
-          eitherToBool = either (const False) (const True)
+    where
+      boolToEither = bool (Left ()) (Right ())
+      eitherToBool = either (const False) (const True)
 
 instance (Memoize a) => Memoize (Maybe a) where
   -- Maybe a <=> Either () a
   memoize f = memoize (f . eitherToMaybe) . maybeToEither
-    where maybeToEither = maybe (Left ()) Right
-          eitherToMaybe = either (const Nothing) Just
+    where
+      maybeToEither = maybe (Left ()) Right
+      eitherToMaybe = either (const Nothing) Just
 
 instance (Memoize a) => Memoize [a] where
   -- [a] <=> Maybe (a, [a])
   memoize f = memoize (f . maybeToList) . listToMaybe
     where
-      listToMaybe :: [a] -> Maybe (a, [a])
       listToMaybe = uncons
-
-      maybeToList :: Maybe (a, [a]) -> [a]
       maybeToList = maybe [] (uncurry (:))
 
-
--- numbers
+-- Numbers
 
 -- Integer <=> (Bool, [Bool])
 -- Where the first bool represents the sign bit and the list has all
@@ -74,19 +80,18 @@ instance (Memoize a) => Memoize [a] where
 -- (well it's actually not quite a bijection because we could have -0
 -- or extra leading 0s, but we won't in practice)
 
-posToList :: Integer -> [Bool]
-posToList 0 = []
-posToList n = (n `mod` 2 == 1) : posToList (n `div` 2)
-
-listToPos :: [Bool] -> Integer
-listToPos [] = 0
-listToPos (x:xs) = (if x then 1 else 0) + (listToPos xs * 2)
-
 integerToList :: Integer -> (Bool, [Bool])
 integerToList n = (n < 0, posToList (abs n))
+  where
+    posToList 0 = []
+    posToList n = (n `mod` 2 == 1) : posToList (n `div` 2)
 
 listToInteger :: (Bool, [Bool]) -> Integer
 listToInteger (neg, l) = (if neg then -1 else 1) * listToPos l
+  where
+    listToPos [] = 0
+    listToPos (x:xs) = (if x then 1 else 0) + 2 * listToPos xs
+
 
 instance Memoize Integer where
   memoize f = memoize (f . listToInteger) . integerToList
@@ -94,7 +99,10 @@ instance Memoize Integer where
 instance Memoize Int where
   memoize f = memoize (f . fromInteger) . toInteger
 
+instance Memoize Word where
+  memoize f = memoize (f . fromInteger) . toInteger
+
 instance Memoize Char where
   memoize f = memoize (f . toEnum) . fromEnum
 
--- It would be easy to add Word and all the different Ints
+-- It would be easy to add Word and all the different Words and stuff
