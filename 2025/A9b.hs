@@ -42,10 +42,15 @@ traceShow' s = traceShow s s
 --------
 
 
-parse = map ((\[x,y] -> (x, y)) . ireadOut)
+-- parse = map ((\[x,y] -> (x, y)) . ireadOut)
 -- OK THIS PROVES IT WRONG??
--- parse = map ((\[x,y] -> (100-y, x)) . ireadOut)
+-- ALL OF THESE GET IT WRONG
 
+-- aaaaaaa. this is wrong!
+parse = map ((\[x,y] -> (x, 1000000-y)) . ireadOut)
+-- parse = map ((\[x,y] -> (100-y, x)) . ireadOut)
+-- parse = map ((\[x,y] -> (100-x, y)) . ireadOut)
+-- parse = map ((\[x,y] -> (y, 100-x)) . ireadOut)
 
 area (x1, y1) (x2, y2) = abs $ (x2-x1+1) * (y2-y1+1)
 
@@ -89,7 +94,6 @@ allnums asdf = nub $ sort $ spread
         spread = concatMap (\x -> [x-1..x+1]) flats
 
 solve m =
-  -- length best
   head ok
   -- segs
   -- inPoly segs (9, 3)
