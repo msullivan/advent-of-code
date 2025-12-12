@@ -49,24 +49,18 @@ parse1 l = (target', nums', jolts)
 
 parse lines = map parse1 lines
 
-step :: [Bool] -> [Int] -> [Bool]
-step state buttons = zipWith (\b i -> if i `elem` buttons then not b else b) state [0..]
+step :: [Int] -> [Bool] -> [Bool]
+step buttons state = zipWith (\b i -> if i `elem` buttons then not b else b) state [0..]
 
--- XXX
 search :: ([Bool], [[Int]], [Int]) -> Int
 search (target, buttons, _) =
-  traceShow' res
-  where res = bfs [(0, map (const False) target)] []
-        bfs [] rest2 = bfs (reverse rest2) []
-        bfs ((n, st):_) rest2 | st == target = n
-        bfs ((n, st):rest) rest2 =
-          let new = (
-                do press <- buttons
-                   return $ (n+1, step st press)
-                )
-          in
-            -- traceShow ((n, st), new) $
-            bfs rest (new++rest2)
+  minimum $ concatMap try $ subsequences buttons
+  where
+    start = map (const False) target
+    try :: [[Int]] -> [Int]
+    try sub = if foldr step target sub == start then [length sub] else []
+
+
 
 solve m = sum $ map search m
 
